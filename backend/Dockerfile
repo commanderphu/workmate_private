@@ -1,13 +1,13 @@
-FROM python:3.11-slim
+FROM python:3.11
 
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     postgresql-client \
+    libpq-dev \
     tesseract-ocr \
     tesseract-ocr-deu \
-    # Pillow dependencies
     libjpeg-dev \
     zlib1g-dev \
     libpng-dev \
@@ -16,9 +16,7 @@ RUN apt-get update && apt-get install -y \
     libopenjp2-7-dev \
     libtiff-dev \
     libwebp-dev \
-    # Build tools
-    gcc \
-    g++ \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
