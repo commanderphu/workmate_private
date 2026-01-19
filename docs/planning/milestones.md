@@ -1,200 +1,200 @@
-# Milestones
+# Meilensteine
 
-## Overview
+## Übersicht
 
-This document tracks concrete milestones with specific deliverables and dates.
+Dieses Dokument verfolgt konkrete Meilensteine mit spezifischen Ergebnissen und Terminen.
 
 ---
 
-## Milestone 0: Documentation Complete ✅
+## Meilenstein 0: Dokumentation abgeschlossen ✅
 
-**Status:** In Progress (95%)  
-**Target:** January 2026  
-**Actual:** January 19, 2026
+**Status:** In Bearbeitung (95%)
+**Ziel:** Januar 2026
+**Erreicht:** 19. Januar 2026
 
-**Deliverables:**
+**Ergebnisse:**
 - [x] README.md
-- [x] docs/concept/ (3 files)
-- [x] docs/architecture/ (4 files)
-- [x] docs/features/ (7 files)
-- [x] docs/development/ (4 files)
-- [x] docs/planning/ (3 files)
+- [x] docs/concept/ (3 Dateien)
+- [x] docs/architecture/ (4 Dateien)
+- [x] docs/features/ (7 Dateien)
+- [x] docs/development/ (4 Dateien)
+- [x] docs/planning/ (3 Dateien)
 - [x] CONTRIBUTING.md
 
-**Outcome:** Complete project documentation ready for development start.
+**Ergebnis:** Vollständige Projektdokumentation bereit für Entwicklungsstart.
 
 ---
 
-## Milestone 1: Repository Setup
+## Meilenstein 1: Repository-Setup
 
-**Status:** Not Started  
-**Target:** January 2026  
-**Owner:** Joshua
+**Status:** Nicht begonnen
+**Ziel:** Januar 2026
+**Verantwortlich:** Joshua
 
-**Tasks:**
-- [ ] Create GitHub repository (public)
-- [ ] Push initial code structure
-- [ ] Setup GitHub Actions (CI/CD)
-- [ ] Configure branch protection
-- [ ] Create issue templates
-- [ ] Setup project board
+**Aufgaben:**
+- [ ] GitHub-Repository erstellen (öffentlich)
+- [ ] Initiale Code-Struktur pushen
+- [ ] GitHub Actions einrichten (CI/CD)
+- [ ] Branch-Schutz konfigurieren
+- [ ] Issue-Templates erstellen
+- [ ] Projekt-Board einrichten
 
-**Acceptance Criteria:**
-- Repository accessible at github.com/commanderphu/workmate-private
-- CI runs on every PR (linting, tests)
-- Contributing guidelines visible
-
----
-
-## Milestone 2: Backend Foundation
-
-**Status:** Not Started  
-**Target:** February 2026  
-**Owner:** Joshua
-
-**Tasks:**
-- [ ] FastAPI project structure
-- [ ] Database models (SQLAlchemy)
-- [ ] Alembic migrations setup
-- [ ] Basic authentication (JWT)
-- [ ] User CRUD endpoints
-- [ ] Health check endpoint
-- [ ] Docker setup
-- [ ] Unit tests (>70% coverage)
-
-**Acceptance Criteria:**
-- `/api/health` returns 200
-- User registration & login works
-- Tests pass
-- Runs in Docker
-
-**Estimated Effort:** 40 hours
+**Akzeptanzkriterien:**
+- Repository erreichbar unter github.com/commanderphu/workmate-private
+- CI läuft bei jedem PR (Linting, Tests)
+- Contributing-Richtlinien sichtbar
 
 ---
 
-## Milestone 3: Frontend Foundation
+## Meilenstein 2: Backend-Grundlage
 
-**Status:** Not Started  
-**Target:** February 2026  
-**Owner:** Joshua
+**Status:** Nicht begonnen
+**Ziel:** Februar 2026
+**Verantwortlich:** Joshua
 
-**Tasks:**
-- [ ] Flutter project structure
-- [ ] Login/Register screens
-- [ ] Navigation setup
-- [ ] API client setup
-- [ ] State management (Provider)
-- [ ] Theme & design system
-- [ ] Basic responsive layout
+**Aufgaben:**
+- [ ] FastAPI-Projektstruktur
+- [ ] Datenbankmodelle (SQLAlchemy)
+- [ ] Alembic-Migrationen einrichten
+- [ ] Basis-Authentifizierung (JWT)
+- [ ] Benutzer-CRUD-Endpunkte
+- [ ] Health-Check-Endpunkt
+- [ ] Docker-Setup
+- [ ] Unit-Tests (>70% Abdeckung)
 
-**Acceptance Criteria:**
-- Login flow works end-to-end
-- Clean, ADHD-friendly UI
-- Works on web & Android
+**Akzeptanzkriterien:**
+- `/api/health` gibt 200 zurück
+- Benutzerregistrierung & Login funktioniert
+- Tests bestehen
+- Läuft in Docker
 
-**Estimated Effort:** 30 hours
-
----
-
-## Milestone 4: Document Processing MVP
-
-**Status:** Not Started  
-**Target:** March 2026  
-**Owner:** Joshua
-
-**Tasks:**
-- [ ] File upload endpoint
-- [ ] Storage service (local/S3)
-- [ ] OCR integration (Tesseract)
-- [ ] Claude API integration
-- [ ] Document classification
-- [ ] Metadata extraction
-- [ ] Frontend upload UI
-- [ ] Processing status display
-
-**Acceptance Criteria:**
-- Upload PDF/Image → processed in <10s
-- Classification accuracy >80%
-- Extracted metadata visible in UI
-
-**Estimated Effort:** 50 hours
+**Geschätzter Aufwand:** 40 Stunden
 
 ---
 
-## Milestone 5: Task Management MVP
+## Meilenstein 3: Frontend-Grundlage
 
-**Status:** Not Started  
-**Target:** March 2026  
-**Owner:** Joshua
+**Status:** Nicht begonnen
+**Ziel:** Februar 2026
+**Verantwortlich:** Joshua
 
-**Tasks:**
-- [ ] Task model & endpoints
-- [ ] CRUD operations
-- [ ] Auto-task creation from documents
-- [ ] Frontend task list
-- [ ] Task detail view
-- [ ] Mark as done functionality
-- [ ] Priority & status filters
+**Aufgaben:**
+- [ ] Flutter-Projektstruktur
+- [ ] Login-/Registrierungs-Bildschirme
+- [ ] Navigation einrichten
+- [ ] API-Client einrichten
+- [ ] State-Management (Provider)
+- [ ] Theme & Design-System
+- [ ] Basis-Responsive-Layout
 
-**Acceptance Criteria:**
-- Tasks created automatically from invoices
-- User can view, edit, complete tasks
-- Filters work
+**Akzeptanzkriterien:**
+- Login-Flow funktioniert End-to-End
+- Saubere, ADHD-freundliche UI
+- Funktioniert auf Web & Android
 
-**Estimated Effort:** 40 hours
-
----
-
-## Milestone 6: Reminder Engine MVP
-
-**Status:** Not Started  
-**Target:** April 2026  
-**Owner:** Joshua
-
-**Tasks:**
-- [ ] Celery setup
-- [ ] Reminder model
-- [ ] Scheduling logic
-- [ ] Push notification service
-- [ ] Email notification service
-- [ ] Reminder generation from tasks
-- [ ] Frontend notification settings
-- [ ] Testing with real tasks
-
-**Acceptance Criteria:**
-- Reminders trigger at correct times
-- Push notifications work (Flutter)
-- Email notifications work
-- User can configure channels
-
-**Estimated Effort:** 60 hours
+**Geschätzter Aufwand:** 30 Stunden
 
 ---
 
-## Milestone 7: Beta Release 🎯
+## Meilenstein 4: Dokumentenverarbeitung MVP
 
-**Status:** Not Started  
-**Target:** May 2026  
-**Owner:** Joshua
+**Status:** Nicht begonnen
+**Ziel:** März 2026
+**Verantwortlich:** Joshua
 
-**Tasks:**
-- [ ] Deploy to production server
-- [ ] SSL setup
-- [ ] Domain configuration
-- [ ] Beta user documentation
-- [ ] Onboarding flow
-- [ ] Feedback mechanism
-- [ ] Bug tracking setup
-- [ ] Recruit 5-10 beta users
+**Aufgaben:**
+- [ ] Datei-Upload-Endpunkt
+- [ ] Speicherdienst (lokal/S3)
+- [ ] OCR-Integration (Tesseract)
+- [ ] Claude-API-Integration
+- [ ] Dokumentenklassifizierung
+- [ ] Metadaten-Extraktion
+- [ ] Frontend-Upload-UI
+- [ ] Verarbeitungsstatus-Anzeige
 
-**Acceptance Criteria:**
-- Accessible at workmate.yourdomain.com
-- 5+ active beta users
-- No critical bugs
-- Positive initial feedback
+**Akzeptanzkriterien:**
+- Upload PDF/Bild → verarbeitet in <10s
+- Klassifizierungsgenauigkeit >80%
+- Extrahierte Metadaten in UI sichtbar
 
-**Beta Testers:**
-1. Joshua's best friend ✅ (confirmed)
+**Geschätzter Aufwand:** 50 Stunden
+
+---
+
+## Meilenstein 5: Aufgabenverwaltung MVP
+
+**Status:** Nicht begonnen
+**Ziel:** März 2026
+**Verantwortlich:** Joshua
+
+**Aufgaben:**
+- [ ] Aufgabenmodell & Endpunkte
+- [ ] CRUD-Operationen
+- [ ] Automatische Aufgabenerstellung aus Dokumenten
+- [ ] Frontend-Aufgabenliste
+- [ ] Aufgabendetail-Ansicht
+- [ ] Als-erledigt-markieren-Funktionalität
+- [ ] Prioritäts- & Statusfilter
+
+**Akzeptanzkriterien:**
+- Aufgaben werden automatisch aus Rechnungen erstellt
+- Benutzer kann Aufgaben ansehen, bearbeiten, abschließen
+- Filter funktionieren
+
+**Geschätzter Aufwand:** 40 Stunden
+
+---
+
+## Meilenstein 6: Erinnerungs-Engine MVP
+
+**Status:** Nicht begonnen
+**Ziel:** April 2026
+**Verantwortlich:** Joshua
+
+**Aufgaben:**
+- [ ] Celery-Setup
+- [ ] Erinnerungsmodell
+- [ ] Planungslogik
+- [ ] Push-Benachrichtigungsdienst
+- [ ] E-Mail-Benachrichtigungsdienst
+- [ ] Erinnerungsgenerierung aus Aufgaben
+- [ ] Frontend-Benachrichtigungseinstellungen
+- [ ] Tests mit echten Aufgaben
+
+**Akzeptanzkriterien:**
+- Erinnerungen werden zu korrekten Zeiten ausgelöst
+- Push-Benachrichtigungen funktionieren (Flutter)
+- E-Mail-Benachrichtigungen funktionieren
+- Benutzer kann Kanäle konfigurieren
+
+**Geschätzter Aufwand:** 60 Stunden
+
+---
+
+## Meilenstein 7: Beta-Release 🎯
+
+**Status:** Nicht begonnen
+**Ziel:** Mai 2026
+**Verantwortlich:** Joshua
+
+**Aufgaben:**
+- [ ] Auf Produktionsserver deployen
+- [ ] SSL-Setup
+- [ ] Domain-Konfiguration
+- [ ] Beta-Benutzerdokumentation
+- [ ] Onboarding-Flow
+- [ ] Feedback-Mechanismus
+- [ ] Bug-Tracking einrichten
+- [ ] 5-10 Beta-Benutzer rekrutieren
+
+**Akzeptanzkriterien:**
+- Erreichbar unter workmate.yourdomain.com
+- 5+ aktive Beta-Benutzer
+- Keine kritischen Bugs
+- Positives initiales Feedback
+
+**Beta-Tester:**
+1. Joshuas bester Freund ✅ (bestätigt)
 2. TBD
 3. TBD
 4. TBD
@@ -202,165 +202,165 @@ This document tracks concrete milestones with specific deliverables and dates.
 
 ---
 
-## Milestone 8: Calendar Integration
+## Meilenstein 8: Kalender-Integration
 
-**Status:** Not Started  
-**Target:** June 2026  
-**Owner:** Joshua
+**Status:** Nicht begonnen
+**Ziel:** Juni 2026
+**Verantwortlich:** Joshua
 
-**Tasks:**
-- [ ] CalDAV implementation
+**Aufgaben:**
+- [ ] CalDAV-Implementierung
 - [ ] Google Calendar OAuth
-- [ ] Sync service
-- [ ] Two-way sync logic
-- [ ] Conflict resolution
-- [ ] Frontend integration setup UI
-- [ ] Testing with multiple calendars
+- [ ] Sync-Dienst
+- [ ] Bidirektionale Sync-Logik
+- [ ] Konfliktauflösung
+- [ ] Frontend-Integrations-Setup-UI
+- [ ] Tests mit mehreren Kalendern
 
-**Acceptance Criteria:**
-- Tasks sync to Google Calendar
-- Changes in calendar sync back
-- Conflicts handled gracefully
+**Akzeptanzkriterien:**
+- Aufgaben synchronisieren zu Google Calendar
+- Änderungen im Kalender synchronisieren zurück
+- Konflikte werden elegant behandelt
 
-**Estimated Effort:** 50 hours
-
----
-
-## Milestone 9: Advanced Features
-
-**Status:** Not Started  
-**Target:** July - September 2026  
-**Owner:** Joshua
-
-**Features to implement:**
-- [ ] Sub-tasks & dependencies
-- [ ] Recurring tasks
-- [ ] Search & filter
-- [ ] Tags system
-- [ ] Analytics dashboard
-- [ ] Paperless-ngx integration
-- [ ] Smart home (Home Assistant)
-
-**Acceptance Criteria:**
-- All features tested by beta users
-- Documentation updated
-- No regressions
-
-**Estimated Effort:** 120 hours
+**Geschätzter Aufwand:** 50 Stunden
 
 ---
 
-## Milestone 10: Public Beta
+## Meilenstein 9: Erweiterte Funktionen
 
-**Status:** Not Started  
-**Target:** September 2026  
-**Owner:** Joshua
+**Status:** Nicht begonnen
+**Ziel:** Juli - September 2026
+**Verantwortlich:** Joshua
 
-**Tasks:**
-- [ ] Performance optimization
-- [ ] Security audit
-- [ ] UI/UX polish
-- [ ] Mobile app (Android) published
-- [ ] Public announcement
-- [ ] Expand to 50+ users
-- [ ] Community setup (Discord?)
+**Zu implementierende Funktionen:**
+- [ ] Unteraufgaben & Abhängigkeiten
+- [ ] Wiederkehrende Aufgaben
+- [ ] Suche & Filter
+- [ ] Tag-System
+- [ ] Analyse-Dashboard
+- [ ] Paperless-ngx-Integration
+- [ ] Smart Home (Home Assistant)
 
-**Acceptance Criteria:**
-- 50+ active users
-- <5s average response time
-- >85% user satisfaction
-- App on Google Play Store
+**Akzeptanzkriterien:**
+- Alle Funktionen von Beta-Benutzern getestet
+- Dokumentation aktualisiert
+- Keine Regressionen
 
----
-
-## Milestone 11: v1.0 Release 🚀
-
-**Status:** Not Started  
-**Target:** December 2026  
-**Owner:** Joshua
-
-**Tasks:**
-- [ ] Feature freeze
-- [ ] Full test coverage (>80%)
-- [ ] User documentation complete
-- [ ] Migration guides
-- [ ] Release notes
-- [ ] Marketing materials
-- [ ] Press release (optional)
-
-**Acceptance Criteria:**
-- All Phase 3 features implemented
-- Stable, production-ready
-- 200+ active users (goal)
-- Community established
+**Geschätzter Aufwand:** 120 Stunden
 
 ---
 
-## Milestone 12: K.I.T. Decision Point
+## Meilenstein 10: Öffentliche Beta
 
-**Status:** Not Started  
-**Target:** November 2026  
-**Owner:** Joshua
+**Status:** Nicht begonnen
+**Ziel:** September 2026
+**Verantwortlich:** Joshua
 
-**Decision:** Go Full-Time with K.I.T. Solutions?
+**Aufgaben:**
+- [ ] Performance-Optimierung
+- [ ] Sicherheitsaudit
+- [ ] UI/UX-Verfeinerung
+- [ ] Mobile-App (Android) veröffentlicht
+- [ ] Öffentliche Ankündigung
+- [ ] Auf 50+ Benutzer erweitern
+- [ ] Community-Setup (Discord?)
 
-**Evaluation Criteria:**
-- [ ] 200+ active Workmate users
-- [ ] 80%+ user satisfaction
-- [ ] Sustainable revenue (if monetized)
-- [ ] Personal wellbeing check
-- [ ] Partner (Jessica) support
-
-**Outcomes:**
-- **Go:** Focus 100% on K.I.T., accelerate development
-- **Wait:** Continue part-time, re-evaluate in 6 months
-
-**This is the BIG milestone!**
+**Akzeptanzkriterien:**
+- 50+ aktive Benutzer
+- <5s durchschnittliche Antwortzeit
+- >85% Benutzerzufriedenheit
+- App im Google Play Store
 
 ---
 
-## Timeline Visualization
+## Meilenstein 11: v1.0 Release 🚀
+
+**Status:** Nicht begonnen
+**Ziel:** Dezember 2026
+**Verantwortlich:** Joshua
+
+**Aufgaben:**
+- [ ] Feature-Freeze
+- [ ] Vollständige Test-Abdeckung (>80%)
+- [ ] Benutzerdokumentation vollständig
+- [ ] Migrations-Anleitungen
+- [ ] Release-Notes
+- [ ] Marketing-Materialien
+- [ ] Pressemitteilung (optional)
+
+**Akzeptanzkriterien:**
+- Alle Phase-3-Funktionen implementiert
+- Stabil, produktionsreif
+- 200+ aktive Benutzer (Ziel)
+- Community etabliert
+
+---
+
+## Meilenstein 12: K.I.T. Entscheidungspunkt
+
+**Status:** Nicht begonnen
+**Ziel:** November 2026
+**Verantwortlich:** Joshua
+
+**Entscheidung:** Vollzeit mit K.I.T. Solutions?
+
+**Bewertungskriterien:**
+- [ ] 200+ aktive Workmate-Benutzer
+- [ ] 80%+ Benutzerzufriedenheit
+- [ ] Nachhaltige Einnahmen (falls monetarisiert)
+- [ ] Persönliches Wohlbefinden prüfen
+- [ ] Unterstützung der Partnerin (Jessica)
+
+**Ergebnisse:**
+- **Los:** 100% Fokus auf K.I.T., beschleunigte Entwicklung
+- **Warten:** Teilzeit fortsetzen, in 6 Monaten neu bewerten
+
+**Das ist der GROSSE Meilenstein!**
+
+---
+
+## Timeline-Visualisierung
 ```
 2026
-├── Q1: Foundation
-│   ├── Jan: Documentation ✅
-│   ├── Feb: Backend + Frontend Foundation
-│   └── Mar: Document Processing + Tasks MVP
+├── Q1: Grundlage
+│   ├── Jan: Dokumentation ✅
+│   ├── Feb: Backend + Frontend Grundlage
+│   └── Mär: Dokumentenverarbeitung + Aufgaben MVP
 │
 ├── Q2: MVP
-│   ├── Apr: Reminders MVP
-│   ├── May: Beta Release 🎯
-│   └── Jun: Calendar Integration
+│   ├── Apr: Erinnerungen MVP
+│   ├── Mai: Beta Release 🎯
+│   └── Jun: Kalender-Integration
 │
-├── Q3: Enhancement
-│   ├── Jul: Advanced Features (Part 1)
-│   ├── Aug: Advanced Features (Part 2)
-│   └── Sep: Public Beta
+├── Q3: Erweiterung
+│   ├── Jul: Erweiterte Funktionen (Teil 1)
+│   ├── Aug: Erweiterte Funktionen (Teil 2)
+│   └── Sep: Öffentliche Beta
 │
-└── Q4: Smart Features
-    ├── Oct: Smart Home, AI Enhancements
-    ├── Nov: K.I.T. Decision Point ⚡
-    └── Dec: v1.0 Release 🚀
+└── Q4: Intelligente Funktionen
+    ├── Okt: Smart Home, KI-Verbesserungen
+    ├── Nov: K.I.T. Entscheidungspunkt ⚡
+    └── Dez: v1.0 Release 🚀
 ```
 
 ---
 
-## Tracking
+## Nachverfolgung
 
-**Status Updates:** Every 2 weeks  
-**Review:** Monthly  
-**Location:** GitHub Project Board
+**Status-Updates:** Alle 2 Wochen
+**Review:** Monatlich
+**Ort:** GitHub-Projekt-Board
 
-**Progress Metrics:**
-- Milestones completed: 1/12 (8%)
-- Estimated total effort: ~450 hours
-- Burn rate: TBD after Phase 1
+**Fortschrittsmetriken:**
+- Abgeschlossene Meilensteine: 1/12 (8%)
+- Geschätzter Gesamtaufwand: ~450 Stunden
+- Burn-Rate: TBD nach Phase 1
 
 ---
 
-## Notes
+## Notizen
 
-- Timelines are estimates, flexibility is key
-- ADHD-friendly: No pressure, progress over perfection
-- Beta feedback will influence priorities
-- Some milestones may shift based on learnings
+- Zeitpläne sind Schätzungen, Flexibilität ist wichtig
+- ADHD-freundlich: Kein Druck, Fortschritt vor Perfektion
+- Beta-Feedback wird Prioritäten beeinflussen
+- Einige Meilensteine können sich basierend auf Erkenntnissen verschieben
