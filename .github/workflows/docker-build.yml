@@ -1,0 +1,37 @@
+name: Docker Build Test
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/docker-build.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'docker-compose.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build Docker images
+      run: docker-compose build
+
+    - name: Start services
+      run: docker-compose up -d
+
+    - name: Wait for backend
+      run: |
+        timeout 60 bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done' || true
+
+    - name: Check backend logs
+      run: docker-compose logs backend
+
+    - name: Stop services
+      run: docker-compose down

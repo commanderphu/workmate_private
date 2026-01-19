@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./workmate.db
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - ENVIRONMENT=development
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # PostgreSQL (optional, für spätere Migration)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_USER: workmate
+  #     POSTGRES_PASSWORD: workmate
+  #     POSTGRES_DB: workmate
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+
+volumes:
+  backend_data:
+  # postgres_data:
