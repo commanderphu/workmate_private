@@ -64,6 +64,7 @@ class Task(Base):
     document = relationship("Document", back_populates="tasks")
     parent_task = relationship("Task", remote_side=[id], backref="subtasks")
     reminders = relationship("Reminder", back_populates="task", cascade="all, delete-orphan")
+    calendar_event = relationship("CalendarEvent", back_populates="task", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Task {self.title} ({self.status})>"
