@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/user_avatar_menu.dart';
+import 'calendar_page.dart';
 import 'documents_page.dart';
 import 'settings_page.dart';
 import 'tasks_page.dart';
@@ -542,8 +543,13 @@ class _DashboardPageState extends State<DashboardPage> {
           ListTile(
             leading: Icon(Icons.calendar_today, color: themeProvider.accentColor),
             title: const Text('Calendar'),
-            subtitle: const Text('Coming soon'),
-            enabled: false,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CalendarPage()),
+              );
+            },
           ),
           const Divider(),
           ListTile(
