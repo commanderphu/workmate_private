@@ -13,6 +13,18 @@ from .document import (
     DocumentWithFileResponse,
     FileResponse,
 )
+from .calendar import (
+    CalendarEventBase,
+    CalendarEventCreate,
+    CalendarEventUpdate,
+    CalendarEventResponse,
+    IntegrationBase,
+    IntegrationCreate,
+    IntegrationUpdate,
+    IntegrationResponse,
+    SyncRequest,
+    SyncResponse,
+)
 
 __all__ = [
     "UserBase",
@@ -32,4 +44,14 @@ __all__ = [
     "DocumentResponse",
     "DocumentWithFileResponse",
     "FileResponse",
+    "CalendarEventBase",
+    "CalendarEventCreate",
+    "CalendarEventUpdate",
+    "CalendarEventResponse",
+    "IntegrationBase",
+    "IntegrationCreate",
+    "IntegrationUpdate",
+    "IntegrationResponse",
+    "SyncRequest",
+    "SyncResponse",
 ]

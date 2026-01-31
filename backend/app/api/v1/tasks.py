@@ -5,12 +5,14 @@ Task management endpoints
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime
 import uuid
 
 from ...db.session import get_db
 from ...schemas import TaskCreate, TaskUpdate, TaskResponse
 from ...models import User, Task
 from ..dependencies import get_current_user
+from ...services.task_event_mapping_service import TaskEventMappingService
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -44,6 +46,8 @@ def create_task(
 ):
     """
     Create a new task
+
+    If task has a due_date, a calendar event will be automatically created.
     """
     new_task = Task(
         user_id=current_user.id,
@@ -60,6 +64,12 @@ def create_task(
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
+
+    # Automatically create calendar event if task has due_date
+    if new_task.due_date:
+        mapping_service = TaskEventMappingService(db)
+        mapping_service.create_event_from_task(new_task)
+        db.refresh(new_task)
 
     return new_task
 
@@ -96,6 +106,8 @@ def update_task(
 ):
     """
     Update a task
+
+    Calendar event will be automatically updated if task has due_date changes.
     """
     task = db.query(Task).filter(
         Task.id == task_id,
@@ -113,7 +125,18 @@ def update_task(
     for field, value in update_data.items():
         setattr(task, field, value)
 
+    # Update completed_at timestamp if status changed to done
+    if task_data.status == "done" and not task.completed_at:
+        task.completed_at = datetime.utcnow()
+    elif task_data.status and task_data.status != "done":
+        task.completed_at = None
+
     db.commit()
+    db.refresh(task)
+
+    # Automatically update/create/delete calendar event based on due_date
+    mapping_service = TaskEventMappingService(db)
+    mapping_service.update_event_from_task(task)
     db.refresh(task)
 
     return task

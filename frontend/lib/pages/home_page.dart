@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import 'settings_page.dart';
 import 'tasks_page.dart';
+import 'calendar_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -99,8 +100,13 @@ class HomePage extends StatelessWidget {
             ListTile(
               leading: Icon(Icons.calendar_today, color: themeProvider.accentColor),
               title: const Text('Calendar'),
-              subtitle: const Text('Coming soon'),
-              enabled: false,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CalendarPage()),
+                );
+              },
             ),
             const Divider(),
             ListTile(
