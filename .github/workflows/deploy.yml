@@ -82,3 +82,22 @@ jobs:
 
             # Cleanup old images
             docker image prune -f
+
+  notify:
+    needs: [build-and-push, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Discord Notification
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: ${{ needs.deploy.result }}
+          title: "Workmate Private – Deploy"
+          description: |
+            **Branch:** `${{ github.ref_name }}`
+            **Commit:** ${{ github.event.head_commit.message }}
+            **Von:** ${{ github.actor }}
+          url: "https://workmate-private.phudevelopement.xyz"
+          color: ${{ needs.deploy.result == 'success' && '0x10b981' || '0xef4444' }}
