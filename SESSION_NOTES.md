@@ -1,206 +1,246 @@
-# Session Notes - 2026-01-23
+# Session Notes
 
-## Projekt-Kontext
+---
 
-**Projekt:** workmate_private (ADHD-Management-Tool)
-- **NICHT** verwechseln mit: workmate_backend (WorkmateOS ERP für K.I.T. Solutions)
-- **Working Directory:** `/home/einfachnurphu/Dokumente/PhuDev/workmate_private/backend`
-- **Ordner wurde umbenannt:** workmare_private → workmate_private
+## Session 2026-04-20 – Prod-Deployment & Beta-Launch
 
-## Was heute implementiert wurde
+### Was wurde gemacht
 
-### ✅ Backend Setup (Komplett)
+**Prod-Server vollständig stabilisiert:**
+- Backend-Crash behoben: `ALLOWED_ORIGINS` pydantic-Parsing (JSON-Format in `.env`)
+- Nginx-Crash behoben: `healthcheck` + `depends_on: service_healthy`
+- Netzwerk-Glitch nach Teil-Neustarts → `docker compose down && up` löst es
+- Cloudflare Flexible SSL Loop: nginx Port-80 dient jetzt Content statt Redirect
+- Let's Encrypt SSL Zertifikat via Certbot
+- `/etc/letsencrypt` Host-Mount (kein leeres Docker-Volume)
 
-#### 1. Database Layer
-- **SQLAlchemy Models erstellt:**
-  - `User` - User accounts mit Auth
-  - `Document` - Dokumente mit OCR/AI-Metadaten (⚠️ `metadata` → `doc_metadata` umbenannt wegen SQLAlchemy Konflikt)
-  - `Task` - Tasks mit Status, Priority, Dependencies
-  - `File` - File Storage Metadaten
-  - `Reminder` - Multi-Stage Reminders mit Eskalation
-  - `Session` - User Sessions mit Device Tracking
+**Datenbank-Migrationen von Grund auf gefixt:**
+- Initiale Schema-Migration fehlte → `0001_initial_schema` erstellt
+- `5750435ca4eb` war für SQLite (VARCHAR statt UUID) → UUID-Typen gefixt
+- `documents`/`files` entsprachen nicht den Models → `0002_fix_documents_files_schema`
+- Alle Migrationen laufen auf PostgreSQL durch
 
-#### 2. Configuration & Security
-- **Config:** `app/core/config.py` mit Pydantic Settings
-- **Security:** `app/core/security.py` mit:
-  - JWT Token (Access + Refresh)
-  - Password Hashing: **Argon2** (bcrypt hatte Kompatibilitätsprobleme mit Python 3.13)
-  - Token Decode/Validation
+**Flutter APK:**
+- `.env` hatte alte interne API-URL → auf `workmate-private.phudevelopement.xyz` gefixt
+- APK gebaut + via Firebase App Distribution verteilt
 
-#### 3. Database Setup
-- **Session Management:** `app/db/session.py` mit get_db() Dependency
-- **Alembic Migrations:** `migrations/env.py` konfiguriert mit Models
-- **Init Script:** `scripts/init_db.py`
-  - Erstellt alle Tables
-  - Default Admin User: username=`admin`, password=`admin`
-  - ✅ Erfolgreich ausgeführt, DB erstellt
+**User angelegt:** `joshua` via `POST /api/v1/auth/login`
 
-#### 4. API Schemas (Pydantic)
-- `schemas/user.py` - UserCreate, UserResponse, UserLogin
-- `schemas/token.py` - Token, TokenPayload
-- `schemas/task.py` - TaskCreate, TaskUpdate, TaskResponse
+### Aktueller Prod-Stand
 
-#### 5. API Endpoints
-**Auth Endpoints:** `api/v1/auth.py`
-- `POST /api/v1/auth/register` - User registrieren
-- `POST /api/v1/auth/login` - Login (returns JWT)
-- `GET /api/v1/auth/me` - Current User Info
-- `POST /api/v1/auth/logout` - Logout
+| Service | Status |
+|---|---|
+| Backend | ✅ healthy (Hetzner cax11) |
+| Nginx + SSL | ✅ up |
+| PostgreSQL | ✅ alle 4 Migrationen durch |
+| CI/CD | ✅ GitHub Actions ARM64 |
+| APK Distribution | ✅ Firebase App Distribution |
+| Login/Auth | ✅ funktioniert |
 
-**Task Endpoints:** `api/v1/tasks.py`
-- `GET /api/v1/tasks/` - List Tasks (mit Status-Filter)
-- `POST /api/v1/tasks/` - Create Task
-- `GET /api/v1/tasks/{id}` - Get Task
-- `PATCH /api/v1/tasks/{id}` - Update Task
-- `DELETE /api/v1/tasks/{id}` - Delete Task
+### Noch offen
+- Email Notifications
+- End-to-End Push Notification Test
+- Weitere Beta-Tester rekrutieren
 
-**Dependencies:** `api/dependencies.py`
-- `get_current_user()` - JWT Auth Middleware
-- `get_current_active_user()` - Active User Check
+---
 
-#### 6. Main Application
-- `app/main.py` - FastAPI App mit:
-  - CORS Middleware
-  - API Router unter `/api/v1`
-  - Health Check: `/health`
-  - Root Endpoint: `/`
 
-### 🗄️ Database
-- **Typ:** SQLite (dev) - `workmate.db`
-- **Produktiv:** PostgreSQL (via docker-compose)
-- **Status:** ✅ Initialisiert mit Admin-User
+## Session 2026-04-18 – Analyse & Doku-Update
 
-### 🐳 Docker Setup
-- **docker-compose.yml** vorhanden mit:
-  - PostgreSQL (Port 5432)
-  - Redis (Port 6379)
-  - Backend (Port 8000) - uvicorn mit --reload
-  - Celery Worker
-  - Celery Beat
-- **Status:** Bereits gestartet (User hat `docker-compose up -d --build` ausgeführt)
+### Kontext
 
-## Frontend Status
+Vollständige Bestandsaufnahme des Projekts. Ziel: Dokumentation auf den tatsächlichen Code-Stand bringen.
 
-### ✅ Flutter Frontend (Mockup Phase)
-- **Theme System:**
-  - Dark Mode Toggle ✅
-  - Accent Color Picker (flex_color_picker) ✅
-  - Persistent Settings (SharedPreferences) ✅
-- **Navigation:**
-  - Drawer mit Menu ✅
-  - Settings Page (separate) ✅
-- **Home Page:**
-  - Hero Section
-  - Feature Cards (Tasks, Documents, Reminders)
-  - "Coming Soon" Mockup
-- **Dateien:**
-  - `lib/pages/home_page.dart`
-  - `lib/pages/settings_page.dart`
-  - `lib/providers/theme_provider.dart`
+### Festgestellt: Was seit der letzten Session implementiert wurde
 
-## Wichtige Fixes
+Seit SESSION_NOTES 2026-01-23 wurden folgende Features komplett implementiert:
 
-1. **Argon2 statt bcrypt** - bcrypt hatte Kompatibilitätsprobleme mit Python 3.13
-   - `pip install argon2-cffi` in .venv
-   - `app/core/security.py` auf argon2 umgestellt
+#### Backend – neue Komponenten
 
-2. **SQLAlchemy Konflikt** - `metadata` ist reserved
-   - `Document.metadata` → `Document.doc_metadata`
+**Kalender-Integration (vollständig):**
+- `app/api/v1/calendar.py` – Calendar API Endpoints (CRUD + Sync)
+- `app/services/caldav_service.py` – CalDAV Integration (Nextcloud, Apple, Radicale, etc.)
+- `app/services/google_calendar_service.py` – Google Calendar OAuth2 + API
+- `app/services/calendar_sync_service.py` – Bidirektionaler Sync-Dienst
+- `app/services/task_event_mapping_service.py` – Task → CalendarEvent Mapping
+- `app/models/calendar_event.py` – CalendarEvent Model (inkl. Conflict-Daten)
+- `app/models/integration.py` – Integration Model (verschlüsselte Credentials)
+- `app/schemas/calendar.py` – Pydantic Schemas für Calendar
 
-3. **Deprecation Warnings** behoben:
-   - `withOpacity()` → `withValues(alpha: x)`
-   - `color.value` → `color.toARGB32()`
+**Dokument-Pipeline (vollständig):**
+- `app/api/v1/documents.py` – Document Upload + Processing Endpoints
+- `app/services/ocr_service.py` – Tesseract OCR Integration
+- `app/services/claude_service.py` – Claude API Dokumenten-Analyse
+- `app/tasks/document_processing.py` – Celery Task für Async Processing
+- `app/services/file_storage.py` – File Storage Service (lokal)
+- `app/api/v1/files.py` – File-Serving Endpoints
 
-## Nächste Schritte
+**Infrastruktur:**
+- `app/main.py` – Health Dashboard unter `/health/ui` (HTML, auto-refresh 30s)
+- Zwei Alembic-Migrationen:
+  - `5750435ca4eb` – Add calendar_events and integrations tables
+  - `1e3f16c582f3` – Remove sevdesk and fints tables (nicht gemergte Altlasten entfernt)
 
-### Sofort:
-1. **Backend testen** - Container-Namen prüfen
-   ```bash
-   docker ps | grep workmate_private
-   curl http://localhost:8000/
-   curl http://localhost:8000/health
-   ```
+#### Frontend – neue Seiten & Services
 
-2. **API Endpoints testen:**
-   ```bash
-   # Login
-   curl -X POST http://localhost:8000/api/v1/auth/login \
-     -H "Content-Type: application/json" \
-     -d '{"username":"admin","password":"admin"}'
+**Neue Pages:**
+- `pages/calendar_page.dart` – Kalender-Ansicht
+- `pages/dashboard_page.dart` – Dashboard mit Navigation
+- `pages/documents_page.dart` – Dokumentenliste
+- `pages/document_detail_page.dart` – Dokumentdetail mit KI-Analyse
+- `pages/task_detail_page.dart` – Taskdetail
+- `pages/integrations_page.dart` – Integrationen-Übersicht
+- `pages/login_page.dart` – Login Screen
 
-   # Token verwenden für Tasks
-   curl -X GET http://localhost:8000/api/v1/tasks/ \
-     -H "Authorization: Bearer <TOKEN>"
-   ```
+**Neue Services & Provider:**
+- `services/calendar_service.dart`
+- `services/document_service.dart`
+- `services/file_upload_service.dart` (Web + Mobile + Stub)
+- `providers/auth_provider.dart`
+- `providers/document_provider.dart`
+- `widgets/integration_setup_dialog.dart`
+- `widgets/user_avatar_menu.dart`
 
-### MVP Completion (Phase 1):
-- [ ] Document Upload Endpoint
-- [ ] OCR Integration (Tesseract)
-- [ ] AI Processing (Claude API)
-- [ ] Reminder Engine Background Job
-- [ ] Push Notifications
-- [ ] Frontend-Backend Integration
+**Neue Models:**
+- `models/calendar_event.dart`
+- `models/document.dart`
+- `models/integration.dart`
 
-### Phase 2:
-- [ ] Calendar Integration (CalDAV)
-- [ ] Email Notifications
-- [ ] Advanced Task Features (Dependencies, Recurring)
-- [ ] Search & Filter
+### Letzter Commit
+`eec9096` – feat: Integrate workmate_private into core_network with Google Calendar support
+
+---
+
+## Session 2026-01-23 – Backend & Frontend Grundlage
+
+### Was implementiert wurde
+
+#### Backend Setup (Komplett)
+
+**Database Layer:**
+- `User`, `Document`, `Task`, `File`, `Reminder`, `Session` Models (SQLAlchemy)
+- ⚠️ `metadata` → `doc_metadata` (SQLAlchemy Reserved Word Konflikt)
+
+**Auth & Security:**
+- `app/core/security.py` – JWT (Access + Refresh), **Argon2** Password Hashing
+- ⚠️ bcrypt hatte Kompatibilitätsprobleme mit Python 3.13 → auf argon2-cffi gewechselt
+
+**API Endpoints:**
+- `POST /api/v1/auth/register`, `/login`, `GET /me`, `POST /logout`
+- `GET/POST /api/v1/tasks/`, `GET/PATCH/DELETE /api/v1/tasks/{id}`
+
+**Docker Setup:**
+- PostgreSQL (Port 5432), Redis (Port 6379), Backend (Port 8000), Celery Worker + Beat
+- SQLite für Dev, PostgreSQL für Prod
+
+#### Flutter Frontend (Mockup-Phase)
+- Dark Mode Toggle, Accent Color Picker (SharedPreferences)
+- Drawer Navigation, Settings Page, Home Page mit Feature Cards
+
+### Wichtige Fixes
+- Argon2 statt bcrypt (Python 3.13 Kompatibilität)
+- `Document.metadata` → `Document.doc_metadata` (SQLAlchemy Konflikt)
+- `withOpacity()` → `withValues(alpha: x)` (Flutter Deprecation)
+- `color.value` → `color.toARGB32()` (Flutter Deprecation)
+
+---
+
+## Aktueller Gesamtstatus (2026-04-18)
+
+### Backend ✅ Weitgehend vollständig
+| Feature | Status |
+|---|---|
+| Auth (JWT + Argon2) | ✅ Fertig |
+| Task CRUD | ✅ Fertig |
+| Document Upload + OCR | ✅ Fertig |
+| Claude AI Analyse | ✅ Fertig |
+| File Storage | ✅ Fertig |
+| CalDAV Integration | ✅ Fertig |
+| Google Calendar OAuth | ✅ Fertig |
+| Calendar Sync (bidirektional) | ✅ Fertig |
+| Reminder Engine (Celery) | ⚠️ Implementiert, Tests ausstehend |
+| Push Notifications | ❌ Noch nicht implementiert |
+| Email Notifications | ❌ Noch nicht implementiert |
+
+### Frontend ✅ Weitgehend vollständig
+| Feature | Status |
+|---|---|
+| Login/Auth Flow | ✅ Fertig |
+| Dashboard | ✅ Fertig |
+| Task Management | ✅ Fertig |
+| Document Upload + Ansicht | ✅ Fertig |
+| Kalender-Seite | ✅ Fertig |
+| Integrations-Setup | ✅ Fertig |
+| Settings (Theme, etc.) | ✅ Fertig |
+
+### Infrastruktur
+| Feature | Status |
+|---|---|
+| Docker Compose (Dev + Prod) | ✅ Fertig |
+| SQLite (Dev) | ✅ Fertig |
+| Alembic Migrations | ✅ 2 Migrationen |
+| Health Dashboard `/health/ui` | ✅ Fertig |
+| CI/CD Pipeline | ❌ Nicht vorhanden |
+| GitHub Repository (public) | ❌ Noch nicht |
+
+---
+
+## Nächste Schritte (Priorität)
+
+### Sofort (April 2026):
+1. **Reminder Engine testen** – Celery Task tatsächlich mit echter DB-Frist testen
+2. **Backend testen** – API Endpoints durchgehen, Edge Cases prüfen
+3. **Frontend-Backend Integration** – Prüfen ob alle Seiten korrekt mit dem Backend kommunizieren
+
+### Kurzfristig (Mai 2026 – MVP):
+- [ ] Push Notifications (Firebase/OneSignal)
+- [ ] Email Notifications (SMTP)
+- [ ] Deployment auf Prod-Server (SSL + Domain)
+- [ ] Beta-Tester onboarden (1 Freund bereits bestätigt)
+
+### Mittelfristig:
+- [ ] GitHub Repository public machen
+- [ ] CI/CD Pipeline (GitHub Actions)
+- [ ] Onboarding Flow für neue User
+
+---
 
 ## Technische Details
 
-### Dependencies (requirements.txt)
+### Stack (aktuell im Einsatz)
 ```
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-sqlalchemy==2.0.36
-alembic==1.14.0
-pydantic==2.10.6
-pydantic-settings==2.7.1
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-argon2-cffi==25.1.0  # Neu hinzugefügt
-python-multipart==0.0.20
-psycopg2-binary==2.9.10
-anthropic==0.47.0
-pytesseract==0.3.13
-pillow==11.1.0
-celery==5.4.0
-redis==5.2.1
-caldav==1.3.9
+Backend:    Python 3.13, FastAPI 0.115.x, SQLAlchemy 2.0, Alembic 1.14
+Auth:       JWT (python-jose), Argon2 (argon2-cffi)
+DB Dev:     SQLite
+DB Prod:    PostgreSQL (docker-compose)
+Queue:      Celery 5.4 + Redis 5.2
+AI:         Claude API (anthropic 0.47+)
+OCR:        Tesseract (pytesseract 0.3.13)
+Calendar:   caldav 1.3.9, Google API Client
+Frontend:   Flutter (Web + Android)
+State:      Provider
 ```
 
 ### Environment (.env)
 ```bash
 DATABASE_URL=sqlite:///./workmate.db
-SECRET_KEY=your-secret-key-here-change-in-production
+SECRET_KEY=<change-in-production>
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-CLAUDE_API_KEY=your-claude-api-key
+CLAUDE_API_KEY=<your-key>
+GOOGLE_CLIENT_ID=<your-id>
+GOOGLE_CLIENT_SECRET=<your-secret>
 ```
 
-## Dokumentation
-
-Alle Feature-Specs siehe:
-- `docs/features/core-features.md` - Detaillierte Feature-Liste
-- `docs/architecture/data-model.md` - Vollständiges Datenmodell
-- `docs/planning/roadmap.md` - Phasen & Timeline
-
-## API Dokumentation
-
-Wenn Backend läuft:
+### API Dokumentation (wenn Backend läuft)
 - Swagger UI: http://localhost:8000/api/v1/docs
 - ReDoc: http://localhost:8000/api/v1/redoc
-
-## Wichtige Notizen
-
-- ⚠️ **Projekt heißt:** workmate_private (mit "t"!)
-- ⚠️ **Anderes Projekt:** workmate_backend (WorkmateOS ERP, Version 3.0.1)
-- ✅ **Backend Version:** 0.1.0 (frisch gebaut)
-- ✅ **Docker läuft bereits** (User hat gestartet)
-- ⚠️ **Bash Commands** hatten zeitweise Exit Code 1 (vermutlich während Ordner-Umbenennung)
+- Health Dashboard: http://localhost:8000/health/ui
 
 ---
 
-**Session Ende:** 2026-01-23
-**Nächste Session:** Backend-Container finden und API testen
+## Wichtige Notizen
+
+- ⚠️ **Projektname:** `workmate_private` (ADHD-Tool) – NICHT `workmate_backend` (WorkmateOS ERP für K.I.T. Solutions)
+- ✅ **Kalender-Integration** ist Phase-2-Feature, wurde aber vorgezogen und ist bereits fertig
+- ✅ **Document Processing Pipeline** ist fertig – OCR + Claude AI funktioniert

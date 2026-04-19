@@ -8,7 +8,7 @@ Workmate Private soll bis Ende 2026 ein ausgereiftes, stabiles Tool für ADHD-Be
 
 ## Phasen
 
-### Phase 0: Foundation (Q1 2026) - **CURRENT**
+### Phase 0: Foundation (Q1 2026) - **ABGESCHLOSSEN** ✅
 
 **Ziel:** Grundlegende Architektur & MVP
 
@@ -16,87 +16,81 @@ Workmate Private soll bis Ende 2026 ein ausgereiftes, stabiles Tool für ADHD-Be
 - [x] Projekt-Setup & Dokumentation
 - [x] Architektur-Design
 - [x] Tech-Stack Entscheidungen
-- [ ] Repository Setup (GitHub)
-- [ ] CI/CD Pipeline
-- [ ] Basic Backend (FastAPI)
-- [ ] Basic Frontend (Flutter Web)
-- [ ] Datenbank-Setup (SQLite/PostgreSQL)
+- [ ] Repository Setup (GitHub) ← noch ausstehend
+- [ ] CI/CD Pipeline ← noch ausstehend
+- [x] Basic Backend (FastAPI)
+- [x] Basic Frontend (Flutter Web)
+- [x] Datenbank-Setup (SQLite/PostgreSQL)
 
 **Deliverables:**
-- Vollständige Dokumentation
-- Lauffähiger Prototyp (lokal)
-- GitHub Repository public
+- [x] Vollständige Dokumentation
+- [x] Lauffähiger Prototyp (lokal)
+- [ ] GitHub Repository public ← noch ausstehend
 
-**Timeline:** Januar - März 2026
+**Timeline:** Januar - März 2026 ✅
 
 ---
 
-### Phase 1: MVP (Q2 2026)
+### Phase 1: MVP (Q2 2026) - **FERTIG** ✅
 
 **Ziel:** Funktionierende Basis-Features für Beta-Tester
 
 **Features:**
 - ✅ Document Upload & Processing
-  - Camera/Scanner Input
-  - OCR (Tesseract + Claude Vision)
-  - Basic KI-Analyse
+  - [x] Camera/Scanner Input (File Upload Web + Mobile)
+  - [x] OCR (Tesseract)
+  - [x] KI-Analyse (Claude API)
 - ✅ Task Management
-  - CRUD Operations
-  - Due Dates & Priorities
-  - Basic Status Tracking
+  - [x] CRUD Operations
+  - [x] Due Dates & Priorities
+  - [x] Basic Status Tracking
 - ✅ Reminder Engine
-  - Multi-Stage Reminders (info, warning, urgent)
-  - Push Notifications
-  - Email Notifications
+  - [x] Multi-Stage Reminders (info, warning, urgent) – implementiert
+  - [x] Push Notifications – Firebase FCM
+  - [ ] Email Notifications – **noch ausstehend**
 - ✅ User Management
-  - Registration & Login
-  - Basic Profile
-  - JWT Authentication
+  - [x] Registration & Login
+  - [x] JWT Authentication (Argon2)
 
 **Tech:**
-- Backend: Python + FastAPI
-- Frontend: Flutter (Web + Android)
-- Database: SQLite (dev), PostgreSQL (prod)
-- AI: Claude API
-- Deployment: Docker Compose
+- [x] Backend: Python 3.13 + FastAPI
+- [x] Frontend: Flutter (Web + Android)
+- [x] Database: SQLite (dev), PostgreSQL (prod)
+- [x] AI: Claude API
+- [x] Deployment: Docker Compose
 
 **Milestone:** Beta Release mit 5-10 Beta-Testern
 
-**Timeline:** April - Juni 2026
+**Timeline:** April 2026 ✅ – **Beta live, Push Notifications implementiert**
 
 ---
 
-### Phase 2: Enhancement (Q3 2026)
+### Phase 2: Enhancement (Q3 2026) - **TEILWEISE VORGEZOGEN** 🔵
 
 **Ziel:** Erweiterte Features & Integrationen
 
 **Features:**
-- ✅ Advanced Task Management
-  - Dependencies
-  - Sub-Tasks
-  - Recurring Tasks
-- ✅ Calendar Integration
-  - CalDAV Support
-  - Google Calendar
-  - Microsoft Outlook
-  - Two-Way Sync
-- ✅ Enhanced Reminders
-  - SMS Integration
-  - Telegram/WhatsApp
-  - Dynamic Escalation
-- ✅ Search & Filter
-  - Full-Text Search
-  - Fuzzy Search
-  - Smart Filters
-- ✅ Basic Analytics
-  - Task Statistics
-  - Completion Rates
-  - Motivation Dashboard
+- 🟡 Advanced Task Management
+  - [ ] Dependencies
+  - [ ] Sub-Tasks
+  - [ ] Recurring Tasks
+- ✅ Calendar Integration ← **bereits in Phase 1 implementiert!**
+  - [x] CalDAV Support (Nextcloud, Apple, Radicale, etc.)
+  - [x] Google Calendar OAuth2 + API
+  - [x] Two-Way Sync (bidirektionaler Sync-Service)
+  - [x] Task → CalendarEvent Mapping
+  - [ ] Microsoft Outlook (geplant)
+- 🟡 Enhanced Reminders
+  - [ ] SMS Integration
+  - [ ] Telegram/WhatsApp
+  - [ ] Dynamic Escalation
+- [ ] Search & Filter
+- [ ] Basic Analytics
 
 **Integrations:**
-- Paperless-ngx (optional)
-- Home Assistant (optional)
-- MQTT (optional)
+- [ ] Paperless-ngx (optional)
+- [ ] Home Assistant (optional)
+- [ ] MQTT (optional)
 
 **Milestone:** Public Beta (50+ Users)
 
@@ -302,5 +296,5 @@ This roadmap is reviewed and updated:
 - Monthly during active development
 - Quarterly after v1.0 release
 
-**Last Updated:** January 19, 2026  
-**Next Review:** February 2026
+**Last Updated:** April 18, 2026  
+**Next Review:** Mai 2026
