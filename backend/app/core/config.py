@@ -3,6 +3,7 @@ Configuration settings for Workmate Private
 """
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 from typing import Optional
 
 
@@ -38,6 +39,13 @@ class Settings(BaseSettings):
         "http://192.168.178.100:3000",
         "https://workmate-private.intern.phudevelopement.xyz",
     ]
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, v):
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
 
     # File Storage
     UPLOAD_DIR: str = "./data/uploads"
