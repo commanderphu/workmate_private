@@ -19,7 +19,7 @@ Die Welt wurde von und für neurotypische Menschen designt. Bürokratie, Dokumen
 
 Workmate Private ist die Antwort darauf: Ein Tool, das nicht versucht, dich zu „reparieren", sondern dich enablet.
 
-**[Mehr zur Vision →](docs/concept/vision.md)**
+**[Mehr zur Vision →](https://github.com/commanderphu/workmate_private/wiki/Vision-&-Philosophie)**
 
 ## ✨ Features
 
@@ -31,7 +31,7 @@ Workmate Private ist die Antwort darauf: Ein Tool, das nicht versucht, dich zu �
 - 🏠 **Smart Home Support** – Wichtige Erinnerungen auch über dein Zuhause (Lichter, Benachrichtigungen)
 - 📱 **Android & Web** – Überall verfügbar, wo du bist
 
-**[Alle Use Cases →](docs/concept/use-cases.md)**
+**[Alle Use Cases →](https://github.com/commanderphu/workmate_private/wiki/Use-Cases)**
 
 ## 🎯 Use Cases
 
@@ -51,7 +51,7 @@ Workmate Private ist die Antwort darauf: Ein Tool, das nicht versucht, dich zu �
 **Problem:** Rezept läuft ab, Arzttermin vergessen  
 **Lösung:** Rezept scannen → Ablaufdatum tracken → Rechtzeitige Erinnerung
 
-**[Mehr Use Cases →](docs/concept/use-cases.md)**
+**[Mehr Use Cases →](https://github.com/commanderphu/workmate_private/wiki/Use-Cases)**
 
 ## 🛠️ Tech Stack
 
@@ -65,7 +65,7 @@ Geplant:
 - **Datenbank:** PostgreSQL
 - **Integrationen:** Paperless-ngx, CalDAV, Smart Home APIs
 
-**[Tech-Stack Details →](docs/architecture/tech-stack.md)**
+**[Tech-Stack Details →](https://github.com/commanderphu/workmate_private/wiki/Tech-Stack)**
 
 ## 🚀 Quick Start
 
@@ -75,39 +75,32 @@ Das Projekt befindet sich aktuell in der Konzept- und Architekturphase. Ein funk
 
 ## 📚 Dokumentation
 
-Die komplette Projekt-Dokumentation findest du im [`docs/`](docs/) Ordner:
+Die vollständige Dokumentation findest du in der **[Wiki](https://github.com/commanderphu/workmate_private/wiki)**:
 
-### Concept
-- [Vision & Philosophie](docs/concept/vision.md)
-- [Warum für Neurodivergente?](docs/concept/why-neurodivergent.md)
-- [Use Cases](docs/concept/use-cases.md)
+### Projekt
+- [Vision & Philosophie](https://github.com/commanderphu/workmate_private/wiki/Vision-&-Philosophie)
+- [Warum für Neurodivergente?](https://github.com/commanderphu/workmate_private/wiki/Warum-f%C3%BCr-Neurodivergente)
+- [Use Cases](https://github.com/commanderphu/workmate_private/wiki/Use-Cases)
+- [Roadmap](https://github.com/commanderphu/workmate_private/wiki/Roadmap)
 
-### Architecture
-- [System Overview](docs/architecture/system-overview.md)
-- [Komponenten](docs/architecture/components.md)
-- [Datenmodell](docs/architecture/data-model.md)
-- [Tech Stack](docs/architecture/tech-stack.md)
+### Architektur
+- [System-Übersicht](https://github.com/commanderphu/workmate_private/wiki/System-%C3%9Cbersicht)
+- [Tech Stack](https://github.com/commanderphu/workmate_private/wiki/Tech-Stack)
+- [Datenmodell](https://github.com/commanderphu/workmate_private/wiki/Datenmodell)
+- [Komponenten](https://github.com/commanderphu/workmate_private/wiki/Komponenten)
 
 ### Features
-- [Core Features](docs/features/core-features.md)
-- [Document Scanner](docs/features/document-scanner.md)
-- [AI Processor](docs/features/ai-processor.md)
-- [Reminder Engine](docs/features/reminder-engine.md)
-- **Integrationen:**
-  - [Kalender](docs/features/integrations/calendar.md)
-  - [Smart Home](docs/features/integrations/smart-home.md)
-  - [Paperless-ngx](docs/features/integrations/paperless-ngx.md)
+- [Core Features](https://github.com/commanderphu/workmate_private/wiki/Core-Features)
+- [Document Scanner](https://github.com/commanderphu/workmate_private/wiki/Document-Scanner)
+- [AI Processor](https://github.com/commanderphu/workmate_private/wiki/AI-Processor)
+- [Reminder Engine](https://github.com/commanderphu/workmate_private/wiki/Reminder-Engine)
+- [Integrationen](https://github.com/commanderphu/workmate_private/wiki/Integrationen)
 
-### Development
-- [Setup Guide](docs/development/setup.md)
-- [API Reference](docs/development/api-reference.md)
-- [Deployment](docs/development/deployment.md)
-- [Contributing](docs/development/contributing.md)
-
-### Planning
-- [Roadmap](docs/planning/roadmap.md)
-- [Milestones](docs/planning/milestones.md)
-- [Architecture Decisions](docs/planning/decisions.md)
+### Entwicklung
+- [Setup Guide](https://github.com/commanderphu/workmate_private/wiki/Setup-Guide)
+- [API Reference](https://github.com/commanderphu/workmate_private/wiki/API-Reference)
+- [Deployment](https://github.com/commanderphu/workmate_private/wiki/Deployment)
+- [Contributing](https://github.com/commanderphu/workmate_private/wiki/Contributing)
 
 ## 🤝 Contributing
 
