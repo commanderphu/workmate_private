@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision: str = 'b1c2d3e4f5a6'
-down_revision: Union[str, None] = 'a3b7c9d12e45'
+down_revision: Union[str, None] = '0002_fix_documents_files_schema'
 branch_labels = None
 depends_on = None
 
