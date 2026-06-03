@@ -5,13 +5,17 @@ on:
     branches: [ main ]
     paths:
       - 'backend/**'
-      - 'docker-compose.yml'
+      - 'docker-compose.prod.yml'
       - '.github/workflows/docker-build.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'backend/**'
-      - 'docker-compose.yml'
+      - 'docker-compose.prod.yml'
+
+env:
+  IMAGE_BACKEND: ghcr.io/commanderphu/workmate_private/backend
+  IMAGE_FRONTEND: ghcr.io/commanderphu/workmate_private/frontend
 
 jobs:
   build:
@@ -20,18 +24,69 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Build Docker images
-      run: docker compose build
-
-    - name: Start services
-      run: docker compose up -d
-
-    - name: Wait for backend
+    - name: Build backend image
       run: |
-        timeout 60 bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done' || true
+        docker build ./backend \
+          --tag ${{ env.IMAGE_BACKEND }}:latest
 
-    - name: Check backend logs
-      run: docker compose logs backend
+    - name: Build frontend image
+      run: |
+        docker build ./frontend \
+          --tag ${{ env.IMAGE_FRONTEND }}:latest
+
+    - name: Create test environment
+      run: |
+        cat > .env <<EOF
+        POSTGRES_PASSWORD=test_password
+        SECRET_KEY=test-secret-key-for-ci-only
+        CLAUDE_API_KEY=test-key
+        ALLOWED_ORIGINS=http://localhost
+        GOOGLE_CLIENT_ID=
+        GOOGLE_CLIENT_SECRET=
+        GOOGLE_REDIRECT_URI=
+        EOF
+
+        cat > firebase-credentials.json <<EOF
+        {
+          "type": "service_account",
+          "project_id": "test",
+          "private_key_id": "test",
+          "private_key": "",
+          "client_email": "test@test.iam.gserviceaccount.com",
+          "client_id": "0",
+          "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+          "token_uri": "https://oauth2.googleapis.com/token"
+        }
+        EOF
+
+    - name: Start core services (ohne nginx)
+      run: |
+        docker compose -f docker-compose.prod.yml up -d \
+          postgres redis backend celery celery-beat
+
+    - name: Wait for backend healthy
+      run: |
+        timeout 90 bash -c '
+          until [ "$(docker inspect workmate_private_backend \
+            --format "{{.State.Health.Status}}")" = "healthy" ]; do
+            echo "Warte auf Backend..."
+            sleep 5
+          done
+        '
+
+    - name: Health check
+      run: |
+        docker exec workmate_private_backend \
+          python -c "import urllib.request; r = urllib.request.urlopen('http://localhost:8000/health'); print(r.read().decode())"
+
+    - name: Backend logs
+      if: always()
+      run: docker compose -f docker-compose.prod.yml logs backend
+
+    - name: Celery logs
+      if: always()
+      run: docker compose -f docker-compose.prod.yml logs celery
 
     - name: Stop services
-      run: docker compose down
+      if: always()
+      run: docker compose -f docker-compose.prod.yml down -v
