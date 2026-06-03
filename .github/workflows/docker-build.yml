@@ -36,28 +36,22 @@ jobs:
 
     - name: Create test environment
       run: |
-        cat > .env <<EOF
-        POSTGRES_PASSWORD=test_password
-        SECRET_KEY=test-secret-key-for-ci-only
-        CLAUDE_API_KEY=test-key
-        ALLOWED_ORIGINS=http://localhost
-        GOOGLE_CLIENT_ID=
-        GOOGLE_CLIENT_SECRET=
-        GOOGLE_REDIRECT_URI=
-        EOF
+        printf '%s\n' \
+          'POSTGRES_PASSWORD=test_password' \
+          'SECRET_KEY=test-secret-key-for-ci-only' \
+          'CLAUDE_API_KEY=test-key' \
+          'ALLOWED_ORIGINS=["http://localhost"]' \
+          'GOOGLE_CLIENT_ID=' \
+          'GOOGLE_CLIENT_SECRET=' \
+          'GOOGLE_REDIRECT_URI=' \
+        > .env
 
-        cat > firebase-credentials.json <<EOF
-        {
-          "type": "service_account",
-          "project_id": "test",
-          "private_key_id": "test",
-          "private_key": "",
-          "client_email": "test@test.iam.gserviceaccount.com",
-          "client_id": "0",
-          "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-          "token_uri": "https://oauth2.googleapis.com/token"
-        }
-        EOF
+        printf '%s\n' \
+          '{"type":"service_account","project_id":"test","private_key_id":"test",' \
+          '"private_key":"","client_email":"test@test.iam.gserviceaccount.com",' \
+          '"client_id":"0","auth_uri":"https://accounts.google.com/o/oauth2/auth",' \
+          '"token_uri":"https://oauth2.googleapis.com/token"}' \
+        > firebase-credentials.json
 
     - name: Start core services (ohne nginx)
       run: |
