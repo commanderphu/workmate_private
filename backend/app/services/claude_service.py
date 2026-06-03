@@ -26,7 +26,7 @@ class ClaudeService:
         # Initialize Claude if API key available
         if settings.CLAUDE_API_KEY:
             self.claude_client = Anthropic(api_key=settings.CLAUDE_API_KEY)
-            self.claude_model = "claude-3-5-sonnet-20241022"
+            self.claude_model = "claude-sonnet-4-6"
 
         # Initialize OpenAI if API key available
         if settings.OPENAI_API_KEY:
