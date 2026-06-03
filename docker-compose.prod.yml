@@ -80,7 +80,9 @@ services:
     image: ghcr.io/commanderphu/workmate_private/backend:latest
     container_name: workmate_private_celery_beat
     restart: unless-stopped
-    command: celery -A app.celery beat --loglevel=info
+    command: celery -A app.celery beat --loglevel=info --schedule=/app/data/celerybeat-schedule
+    volumes:
+      - celery_beat_data:/app/data
     depends_on:
       - redis
     environment:
@@ -119,6 +121,7 @@ services:
 volumes:
   postgres_data:
   uploads:
+  celery_beat_data:
   certbot_www:
   certbot_conf:
 
