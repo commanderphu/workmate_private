@@ -28,8 +28,6 @@ class Settings(BaseSettings):
 
     # AI
     CLAUDE_API_KEY: Optional[str] = None
-    OPENAI_API_KEY: Optional[str] = None
-    OLLAMA_URL: str = "http://localhost:11434"
 
     # CORS
     ALLOWED_ORIGINS: list[str] = [
