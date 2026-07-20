@@ -50,3 +50,11 @@ htmlcov/
 
 # Claude Code
 .claude/
+
+# Secrets & Credentials
+firebase-credentials.json
+google-services.json
+
+# Celery runtime
+backend/celerybeat-schedule
+backend/celerybeat-schedule.db
