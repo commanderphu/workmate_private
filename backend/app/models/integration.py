@@ -17,6 +17,7 @@ class IntegrationType(str, enum.Enum):
     CALDAV = "caldav"
     GOOGLE_CALENDAR = "google_calendar"
     OUTLOOK_CALENDAR = "outlook_calendar"
+    PAPERLESS_NGX = "paperless_ngx"
 
 
 class SyncDirection(str, enum.Enum):

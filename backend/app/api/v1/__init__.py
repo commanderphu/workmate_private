@@ -8,6 +8,7 @@ from .tasks import router as tasks_router
 from .documents import router as documents_router
 from .calendar import router as calendar_router
 from .notifications import router as notifications_router
+from .paperless import router as paperless_router
 
 api_router = APIRouter()
 
@@ -17,3 +18,4 @@ api_router.include_router(tasks_router)
 api_router.include_router(documents_router, prefix="/documents", tags=["documents"])
 api_router.include_router(calendar_router)
 api_router.include_router(notifications_router)
+api_router.include_router(paperless_router)

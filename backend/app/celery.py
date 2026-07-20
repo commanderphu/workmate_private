@@ -27,10 +27,14 @@ celery_app.conf.update(
 # Auto-discover tasks in the tasks module
 celery_app.autodiscover_tasks(['app.tasks'])
 
-# Beat schedule: check for due reminders every minute
+# Beat schedule
 celery_app.conf.beat_schedule = {
     "dispatch-reminders": {
         "task": "app.tasks.dispatch_reminders",
         "schedule": 60.0,  # every 60 seconds
+    },
+    "paperless-sync": {
+        "task": "app.tasks.paperless_sync",
+        "schedule": 1800.0,  # every 30 minutes
     },
 }

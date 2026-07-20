@@ -61,10 +61,15 @@ class Settings(BaseSettings):
     # Firebase Push Notifications
     FIREBASE_CREDENTIALS_PATH: Optional[str] = None
 
+    # Paperless-ngx Integration
+    PAPERLESS_URL: Optional[str] = None
+    PAPERLESS_TOKEN: Optional[str] = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=True
+        case_sensitive=True,
+        extra="ignore"
     )
 
 
