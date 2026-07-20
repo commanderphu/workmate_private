@@ -35,7 +35,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "http://localhost:8080",
         "http://192.168.178.100:3000",
-        "https://workmate-private.intern.phudevelopement.xyz",
+        "https://workmate-private.phudevelopement.xyz",
     ]
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     # Google Calendar OAuth
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None
-    GOOGLE_REDIRECT_URI: str = "https://api.workmate-private.intern.phudevelopement.xyz/api/v1/calendar/oauth/google/callback"
+    GOOGLE_REDIRECT_URI: str = "https://workmate-private.phudevelopement.xyz/api/v1/calendar/oauth/google/callback"
 
     # Firebase Push Notifications
     FIREBASE_CREDENTIALS_PATH: Optional[str] = None
