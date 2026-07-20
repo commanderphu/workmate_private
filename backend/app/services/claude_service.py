@@ -138,6 +138,36 @@ Return ONLY a valid JSON object with these fields:
 Rules: Return ONLY JSON. Use null for missing values. Extract ALL visible text.
 German documents are common. Priority: critical=Mahnung/overdue, high=due soon, medium=invoice, low=receipt."""
 
+    def analyze_for_paperless(self, text: str) -> dict:
+        """Analyze Paperless-ngx document: return summary + suggested tags."""
+        prompt = f"""Analysiere den folgenden Dokumententext und gib strukturierte Informationen zurück.
+
+DOKUMENTTEXT:
+---
+{text[:6000]}
+---
+
+Antworte NUR mit einem gültigen JSON-Objekt:
+{{
+  "type": "Rechnung|Mahnung|Vertrag|Quittung|Behörde|Versicherung|Bank|Sonstiges",
+  "summary": "2-3 Sätze Zusammenfassung auf Deutsch: Was ist das Dokument, von wem, worum geht es?",
+  "tags": ["maximal 5 Tags als kurze Strings, z.B. Absendername, Kategorie, Jahr"],
+  "sender": "Firmen- oder Absendername oder null",
+  "amount": Zahl oder null,
+  "currency": "EUR",
+  "due_date": "YYYY-MM-DD oder null",
+  "action_required": true|false
+}}
+
+Regeln: Nur JSON. Deutsche Dokumente sind üblich. Tags sollen kurz und nützlich sein (z.B. "Telekom", "Rechnung", "2026", "Offen").
+"""
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return self._parse_ai_response(response.content[0].text)
+
     def _build_analysis_prompt(self, text: str, document_type: Optional[str]) -> str:
         type_hint = f"\nHINT: This is likely a {document_type} document." if document_type else ""
         return f"""Analyze the following document text and extract structured information.

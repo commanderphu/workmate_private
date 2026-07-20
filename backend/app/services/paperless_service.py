@@ -132,8 +132,7 @@ class PaperlessSyncService:
             raise RuntimeError("Paperless not configured (PAPERLESS_URL / PAPERLESS_TOKEN missing)")
 
         from ..models.document import Document as DocumentModel
-        from ..models.file import File as FileModel
-        from ..tasks.document_processing import process_document
+        from ..tasks.paperless_analyze import analyze_paperless_document
 
         lookback = since or (datetime.utcnow() - timedelta(days=30))
         imported = 0
@@ -180,7 +179,7 @@ class PaperlessSyncService:
                 self.db.add(db_doc)
                 self.db.flush()
 
-                process_document.delay(str(db_doc.id))
+                analyze_paperless_document.delay(str(db_doc.id))
                 imported += 1
 
             if not result.get("next"):
