@@ -1,7 +1,7 @@
 class Document {
   final String id;
   final String userId;
-  final String fileId;
+  final String? fileId;
   final String title;
   final String type;
   final Map<String, dynamic> docMetadata;
@@ -15,7 +15,7 @@ class Document {
   Document({
     required this.id,
     required this.userId,
-    required this.fileId,
+    this.fileId,
     required this.title,
     required this.type,
     required this.docMetadata,
@@ -31,7 +31,7 @@ class Document {
     return Document(
       id: json['id'] as String,
       userId: json['user_id'] as String,
-      fileId: json['file_id'] as String,
+      fileId: json['file_id'] as String?,
       title: json['title'] as String? ?? 'Untitled',
       type: json['type'] as String,
       docMetadata: (json['doc_metadata'] as Map<String, dynamic>?) ?? {},
