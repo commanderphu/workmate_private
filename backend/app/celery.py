@@ -9,12 +9,13 @@ celery_app = Celery(
     "workmate",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
+    include=[
+        "app.tasks.document_processing",
+        "app.tasks.reminder_dispatch",
+        "app.tasks.paperless_sync",
+        "app.tasks.paperless_analyze",
+    ],
 )
-
-# Use default queue (celery) for all tasks
-# celery_app.conf.task_routes = {
-#     "app.tasks.*": "main-queue",
-# }
 
 celery_app.conf.update(
     task_serializer="json",
@@ -23,9 +24,6 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
 )
-
-# Auto-discover tasks: imports app.tasks (__init__.py) which re-exports all task modules
-celery_app.autodiscover_tasks(['app'])
 
 # Beat schedule
 celery_app.conf.beat_schedule = {
