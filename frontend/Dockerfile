@@ -16,6 +16,8 @@ RUN flutter build web --release
 FROM nginx:alpine
 
 COPY --from=build /app/build/web /usr/share/nginx/html
+# Explizit sicherstellen dass der FCM Service Worker vorhanden ist
+COPY web/firebase-messaging-sw.js /usr/share/nginx/html/firebase-messaging-sw.js
 RUN chmod -R 755 /usr/share/nginx/html
 
 RUN printf 'server {\n\
