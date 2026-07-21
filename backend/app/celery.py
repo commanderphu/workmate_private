@@ -24,8 +24,8 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
-# Auto-discover tasks in the tasks module
-celery_app.autodiscover_tasks(['app.tasks'])
+# Auto-discover tasks: imports app.tasks (__init__.py) which re-exports all task modules
+celery_app.autodiscover_tasks(['app'])
 
 # Beat schedule
 celery_app.conf.beat_schedule = {
