@@ -32,7 +32,7 @@ def analyze_paperless_document(self, document_id: str):
         text = doc.extracted_text or ""
         if len(text.strip()) < 20:
             logger.info(f"Document {document_id} has no usable OCR text, skipping AI analysis")
-            doc.processing_status = "completed"
+            doc.processing_status = "done"
             db.commit()
             return
 
@@ -56,7 +56,7 @@ def analyze_paperless_document(self, document_id: str):
         })
         doc.doc_metadata = meta
         doc.type = _map_type(result.get("type", "Sonstiges"))
-        doc.processing_status = "completed"
+        doc.processing_status = "done"
         db.commit()
 
         # Write back to Paperless
