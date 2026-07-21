@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import '../models/document.dart';
 import '../providers/document_provider.dart';
@@ -199,32 +200,58 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
 
   Widget _buildPaperlessPlaceholder() {
     final paperlessId = _document!.docMetadata['paperless_id'];
-    return Container(
-      height: 160,
-      color: Colors.grey[100],
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.cloud_outlined, size: 48, color: Colors.grey[400]),
-            const SizedBox(height: 8),
-            Text(
-              'Aus Paperless-ngx importiert',
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.open_in_new, size: 16),
-              label: const Text('In Paperless öffnen'),
-              onPressed: () {
-                // TODO: url_launcher öffnen
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Paperless Dokument #$paperlessId')),
-                );
-              },
-            ),
-          ],
-        ),
+    final thumbUrl = '${ApiConfig.baseUrl}/integrations/paperless/thumbnail/$paperlessId';
+    const storage = FlutterSecureStorage();
+
+    return FutureBuilder<String?>(
+      future: storage.read(key: 'access_token'),
+      builder: (context, snapshot) {
+        final token = snapshot.data;
+        return Container(
+          height: 300,
+          color: Colors.grey[100],
+          child: Stack(
+            children: [
+              if (token != null)
+                Image.network(
+                  thumbUrl,
+                  width: double.infinity,
+                  height: 300,
+                  fit: BoxFit.contain,
+                  headers: {'Authorization': 'Bearer $token'},
+                  errorBuilder: (context, error, stackTrace) => _paperlessFallback(),
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                )
+              else
+                _paperlessFallback(),
+              Positioned(
+                bottom: 8,
+                right: 8,
+                child: Chip(
+                  avatar: const Icon(Icons.cloud_outlined, size: 16),
+                  label: const Text('Paperless-ngx'),
+                  backgroundColor: Colors.white.withOpacity(0.85),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _paperlessFallback() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.cloud_outlined, size: 48, color: Colors.grey[400]),
+          const SizedBox(height: 8),
+          Text('Vorschau nicht verfügbar', style: TextStyle(color: Colors.grey[600])),
+        ],
       ),
     );
   }

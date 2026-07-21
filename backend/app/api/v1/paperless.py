@@ -2,7 +2,9 @@
 Paperless-ngx integration endpoints
 """
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
@@ -121,3 +123,26 @@ async def write_back_to_paperless(
         )
 
     return WriteBackResult(success=True, document_id=document_id)
+
+
+@router.get("/thumbnail/{paperless_id}")
+async def get_paperless_thumbnail(
+    paperless_id: int,
+    current_user: User = Depends(get_current_active_user),
+):
+    """Proxy the Paperless thumbnail image so Flutter can display it."""
+    client = get_paperless_client()
+    if not client:
+        raise HTTPException(status_code=503, detail="Paperless not configured.")
+
+    url = f"{settings.PAPERLESS_URL}/api/documents/{paperless_id}/thumb/"
+    async with httpx.AsyncClient(verify=False, timeout=15) as http:
+        resp = await http.get(url, headers={"Authorization": f"Token {settings.PAPERLESS_TOKEN}"})
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=resp.status_code, detail="Thumbnail not found")
+
+    return Response(
+        content=resp.content,
+        media_type=resp.headers.get("content-type", "image/webp"),
+    )
