@@ -35,7 +35,7 @@ class Task {
       dueDate: json['due_date'] != null ? DateTime.parse(json['due_date']) : null,
       status: json['status'] as String? ?? 'open',
       priority: json['priority'] as String? ?? 'medium',
-      amount: json['amount'] != null ? (json['amount'] as num).toDouble() : null,
+      amount: json['amount'] != null ? double.parse(json['amount'].toString()) : null,
       currency: json['currency'] as String?,
       documentId: json['document_id'] as String?,
       createdAt: DateTime.parse(json['created_at']),
