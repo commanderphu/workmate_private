@@ -164,7 +164,7 @@ class PaperlessSyncService:
                     self.db.query(DocumentModel)
                     .filter(
                         DocumentModel.user_id == self.user_id,
-                        DocumentModel.doc_metadata["paperless_id"].astext == paperless_id,
+                        DocumentModel.doc_metadata["paperless_id"].as_string() == paperless_id,
                     )
                     .first()
                 )
