@@ -70,6 +70,9 @@ jobs:
           script: |
             cd /opt/workmate-private
 
+            # Sync config files from repo
+            git pull origin main
+
             # Pull latest images
             docker compose -f docker-compose.prod.yml pull
 
