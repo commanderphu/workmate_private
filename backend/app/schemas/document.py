@@ -30,7 +30,7 @@ class DocumentResponse(DocumentBase):
     """Schema for document response"""
     id: UUID
     user_id: UUID
-    file_id: UUID
+    file_id: Optional[UUID] = None
     doc_metadata: Dict[str, Any] = {}
     processing_status: str
     confidence_score: Optional[float] = None
@@ -57,7 +57,7 @@ class FileResponse(BaseModel):
 
 class DocumentWithFileResponse(DocumentResponse):
     """Schema for document with file info"""
-    file: FileResponse
+    file: Optional[FileResponse] = None
 
     class Config:
         from_attributes = True
