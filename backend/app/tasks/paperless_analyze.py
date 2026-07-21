@@ -46,15 +46,19 @@ def analyze_paperless_document(self, document_id: str):
 
         # Persist metadata — use dict() to create new object so SQLAlchemy detects the change
         meta = dict(doc.doc_metadata or {})
+        sender = result.get("sender")
         meta.update({
+            # Raw AI fields (used for Paperless writeback)
             "ai_type": result.get("type"),
             "ai_summary": result.get("summary"),
             "ai_tags": result.get("tags", []),
-            "ai_sender": result.get("sender"),
-            "ai_amount": result.get("amount"),
-            "ai_currency": result.get("currency", "EUR"),
-            "ai_due_date": result.get("due_date"),
             "ai_action_required": result.get("action_required", False),
+            # Flutter-compatible display fields
+            "sender": {"name": sender} if sender else None,
+            "amount": result.get("amount"),
+            "currency": result.get("currency", "EUR"),
+            "due_date": result.get("due_date"),
+            "description": result.get("summary"),
         })
         doc.doc_metadata = meta
         flag_modified(doc, "doc_metadata")

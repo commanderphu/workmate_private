@@ -172,7 +172,9 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
             children: [
               // Document Preview
               if (_document!.file != null)
-                _buildDocumentPreview(),
+                _buildDocumentPreview()
+              else if (_document!.docMetadata['paperless_id'] != null)
+                _buildPaperlessPlaceholder(),
 
               // Status Section
               _buildStatusSection(),
@@ -190,6 +192,38 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
                 _buildFileInfoSection(),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaperlessPlaceholder() {
+    final paperlessId = _document!.docMetadata['paperless_id'];
+    return Container(
+      height: 160,
+      color: Colors.grey[100],
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cloud_outlined, size: 48, color: Colors.grey[400]),
+            const SizedBox(height: 8),
+            Text(
+              'Aus Paperless-ngx importiert',
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('In Paperless öffnen'),
+              onPressed: () {
+                // TODO: url_launcher öffnen
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Paperless Dokument #$paperlessId')),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
