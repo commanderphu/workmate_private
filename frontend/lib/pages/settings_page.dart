@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
+import '../utils/gravatar.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -172,19 +173,68 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildProfil(ThemeData theme) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final accent = themeProvider.accentColor;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_user != null) ...[
-              Text(_user!.username,
-                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
-              Text(_user!.email, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
-              const SizedBox(height: 16),
-            ],
+      child: Column(
+        children: [
+          // Avatar-Header
+          if (_user != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [accent.withValues(alpha: 0.15), accent.withValues(alpha: 0.03)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              ),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 36,
+                    backgroundImage: NetworkImage(
+                      GravatarUtils.getGravatarUrl(_user!.email, size: 150),
+                    ),
+                    backgroundColor: accent.withValues(alpha: 0.2),
+                    child: null,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _user!.fullName ?? _user!.username,
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _user!.email,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '@${_user!.username}',
+                      style: theme.textTheme.labelSmall?.copyWith(color: accent),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          // Formfelder
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
             TextField(
               controller: _fullNameCtrl,
               decoration: const InputDecoration(
@@ -225,6 +275,8 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ],
         ),
+          ),
+        ],
       ),
     );
   }
