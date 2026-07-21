@@ -5,6 +5,8 @@ AI analysis task for Paperless-ngx documents
 import logging
 from uuid import UUID
 
+from sqlalchemy.orm.attributes import flag_modified
+
 from ..celery import celery_app
 from ..db.session import SessionLocal
 from ..models.document import Document as DocumentModel
@@ -42,8 +44,8 @@ def analyze_paperless_document(self, document_id: str):
         claude = ClaudeService()
         result = claude.analyze_for_paperless(text)
 
-        # Persist metadata
-        meta = doc.doc_metadata or {}
+        # Persist metadata — use dict() to create new object so SQLAlchemy detects the change
+        meta = dict(doc.doc_metadata or {})
         meta.update({
             "ai_type": result.get("type"),
             "ai_summary": result.get("summary"),
@@ -55,6 +57,7 @@ def analyze_paperless_document(self, document_id: str):
             "ai_action_required": result.get("action_required", False),
         })
         doc.doc_metadata = meta
+        flag_modified(doc, "doc_metadata")
         doc.type = _map_type(result.get("type", "Sonstiges"))
         doc.processing_status = "done"
         db.commit()
