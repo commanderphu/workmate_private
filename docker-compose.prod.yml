@@ -52,6 +52,8 @@ services:
       DEBUG: "false"
       ENVIRONMENT: production
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      PAPERLESS_URL: ${PAPERLESS_URL:-}
+      PAPERLESS_TOKEN: ${PAPERLESS_TOKEN:-}
     networks:
       - internal
 
@@ -73,6 +75,8 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       FIREBASE_CREDENTIALS_PATH: /app/firebase-credentials.json
+      PAPERLESS_URL: ${PAPERLESS_URL:-}
+      PAPERLESS_TOKEN: ${PAPERLESS_TOKEN:-}
     networks:
       - internal
 
@@ -88,6 +92,8 @@ services:
     environment:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
+      PAPERLESS_URL: ${PAPERLESS_URL:-}
+      PAPERLESS_TOKEN: ${PAPERLESS_TOKEN:-}
     networks:
       - internal
 
