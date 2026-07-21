@@ -3,13 +3,19 @@ AI analysis task for Paperless-ngx documents
 """
 
 import logging
+import uuid
+from datetime import datetime, timedelta
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy.orm.attributes import flag_modified
 
 from ..celery import celery_app
 from ..db.session import SessionLocal
+from ..models.calendar_event import CalendarEvent
 from ..models.document import Document as DocumentModel
+from ..models.reminder import Reminder
+from ..models.task import Task, TaskPriority, TaskStatus
 from ..services.claude_service import ClaudeService
 from ..services.paperless_service import get_paperless_client
 
@@ -66,6 +72,11 @@ def analyze_paperless_document(self, document_id: str):
         doc.processing_status = "done"
         db.commit()
 
+        # Create task + calendar + reminder if action required or due date present
+        due_date_str = result.get("due_date")
+        if result.get("action_required") or due_date_str:
+            _create_action_items(db, doc, result, due_date_str)
+
         # Write back to Paperless
         paperless_id = meta.get("paperless_id")
         if paperless_id:
@@ -87,6 +98,76 @@ def analyze_paperless_document(self, document_id: str):
         raise self.retry(exc=exc, countdown=60)
     finally:
         db.close()
+
+
+def _create_action_items(db, doc: DocumentModel, result: dict, due_date_str: str | None):
+    """Create Task, CalendarEvent and Reminder for actionable documents."""
+    # Skip if a task is already linked to this document
+    existing = db.query(Task).filter(Task.document_id == doc.id).first()
+    if existing:
+        return
+
+    due_dt: datetime | None = None
+    if due_date_str:
+        try:
+            due_dt = datetime.strptime(due_date_str, "%Y-%m-%d").replace(hour=9, minute=0)
+        except ValueError:
+            pass
+
+    amount = result.get("amount")
+    sender = result.get("sender") or ""
+    doc_type = result.get("type", "Dokument")
+    summary = result.get("summary", "")
+
+    title = f"{doc_type} bezahlen: {sender}" if sender else f"{doc_type}: {doc.title}"
+    priority = TaskPriority.HIGH if result.get("action_required") else TaskPriority.MEDIUM
+
+    task = Task(
+        id=uuid.uuid4(),
+        user_id=doc.user_id,
+        document_id=doc.id,
+        title=title,
+        description=summary,
+        due_date=due_dt,
+        status=TaskStatus.OPEN,
+        priority=priority,
+        amount=Decimal(str(amount)) if amount else None,
+        currency=result.get("currency", "EUR"),
+    )
+    db.add(task)
+    db.flush()  # get task.id
+
+    # Calendar event on the due date
+    if due_dt:
+        event = CalendarEvent(
+            id=uuid.uuid4(),
+            user_id=doc.user_id,
+            task_id=task.id,
+            title=title,
+            description=summary,
+            start_time=due_dt,
+            end_time=due_dt + timedelta(hours=1),
+            all_day=False,
+        )
+        db.add(event)
+
+        # Reminder one day before (or 2 hours from now if due date is today/past)
+        remind_at = due_dt - timedelta(days=1)
+        if remind_at < datetime.utcnow():
+            remind_at = datetime.utcnow() + timedelta(hours=2)
+
+        reminder = Reminder(
+            id=uuid.uuid4(),
+            task_id=task.id,
+            trigger_at=remind_at,
+            severity="high",
+            channels=["push"],
+            status="pending",
+        )
+        db.add(reminder)
+
+    db.commit()
+    logger.info(f"Created task '{title}' for document {doc.id}")
 
 
 async def _write_to_paperless(paperless_id: int, result: dict):
