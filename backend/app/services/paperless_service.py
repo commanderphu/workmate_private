@@ -108,11 +108,21 @@ class PaperlessClient:
         return await self.create_custom_field(name, data_type)
 
 
-def get_paperless_client() -> Optional[PaperlessClient]:
-    """Get configured Paperless client from settings, or None if not configured"""
-    if not settings.PAPERLESS_URL or not settings.PAPERLESS_TOKEN:
+def get_paperless_client(user=None) -> Optional[PaperlessClient]:
+    """Get Paperless client — user-specific credentials take precedence over env vars."""
+    url = None
+    token = None
+
+    if user and user.ui_preferences:
+        url = user.ui_preferences.get("paperless_url")
+        token = user.ui_preferences.get("paperless_token")
+
+    url = url or settings.PAPERLESS_URL
+    token = token or settings.PAPERLESS_TOKEN
+
+    if not url or not token:
         return None
-    return PaperlessClient(base_url=settings.PAPERLESS_URL, token=settings.PAPERLESS_TOKEN)
+    return PaperlessClient(base_url=url, token=token)
 
 
 class PaperlessSyncService:

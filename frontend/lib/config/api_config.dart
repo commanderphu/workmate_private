@@ -11,6 +11,7 @@ class ApiConfig {
   static const String authRegister = '/auth/register';
   static const String authMe = '/auth/me';
   static const String authLogout = '/auth/logout';
+  static const String authMePatch = '/auth/me';
 
   static const String tasks = '/tasks/';
   static String taskById(String id) => '/tasks/$id';

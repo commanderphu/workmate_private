@@ -96,4 +96,12 @@ class AuthService {
   Future<String?> getToken() async {
     return await _storage.read(key: 'access_token');
   }
+
+  // Update user settings (profile + integrations + notifications)
+  Future<User> updateSettings(Map<String, dynamic> data) async {
+    final response = await _apiService.patch(ApiConfig.authMePatch, data: data);
+    final user = User.fromJson(response.data);
+    await _storage.write(key: 'user_data', value: jsonEncode(user.toJson()));
+    return user;
+  }
 }

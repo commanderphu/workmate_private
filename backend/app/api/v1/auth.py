@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from ...db.session import get_db
-from ...schemas import UserCreate, UserResponse, UserLogin, Token
+from ...schemas import UserCreate, UserResponse, UserSettingsUpdate, UserLogin, Token
 from ...models import User
 from ...core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
 from ..dependencies import get_current_user
@@ -98,9 +98,46 @@ def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
 
+@router.patch("/me", response_model=UserResponse)
+def update_settings(
+    data: UserSettingsUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update user profile and all configurable parameters"""
+    if data.full_name is not None:
+        current_user.full_name = data.full_name
+    if data.timezone is not None:
+        current_user.timezone = data.timezone
+    if data.language is not None:
+        current_user.language = data.language
+
+    # Merge ui_preferences
+    prefs = dict(current_user.ui_preferences or {})
+    if data.paperless_url is not None:
+        prefs["paperless_url"] = data.paperless_url
+    if data.paperless_token is not None:
+        prefs["paperless_token"] = data.paperless_token
+    if data.ui_preferences:
+        prefs.update(data.ui_preferences)
+    current_user.ui_preferences = prefs
+
+    # Merge notification_preferences
+    notif = dict(current_user.notification_preferences or {})
+    if data.notifications_push_enabled is not None:
+        notif["push_enabled"] = data.notifications_push_enabled
+    if data.notifications_email_enabled is not None:
+        notif["email_enabled"] = data.notifications_email_enabled
+    if data.notifications_reminder_minutes is not None:
+        notif["reminder_minutes"] = data.notifications_reminder_minutes
+    current_user.notification_preferences = notif
+
+    current_user.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
 @router.post("/logout")
 def logout(current_user: User = Depends(get_current_user)):
-    """
-    Logout (client should delete token)
-    """
     return {"message": "Successfully logged out"}

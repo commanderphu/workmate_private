@@ -2,7 +2,7 @@
 Schemas package
 """
 
-from .user import UserBase, UserCreate, UserUpdate, UserResponse, UserLogin
+from .user import UserBase, UserCreate, UserUpdate, UserSettingsUpdate, UserResponse, UserLogin
 from .token import Token, TokenPayload
 from .task import TaskBase, TaskCreate, TaskUpdate, TaskResponse
 from .document import (
