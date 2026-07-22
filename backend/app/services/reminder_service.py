@@ -34,6 +34,14 @@ class ReminderService:
         ],
     }
 
+    # Contract-specific schedule — much longer lead times for Kündigungsfristen
+    CONTRACT_REMINDER_SCHEDULE = [
+        {"days_before": 30, "severity": ReminderSeverity.INFO},
+        {"days_before": 14, "severity": ReminderSeverity.WARNING},
+        {"days_before": 7,  "severity": ReminderSeverity.URGENT},
+        {"days_before": 1,  "severity": ReminderSeverity.CRITICAL},
+    ]
+
     # Default notification channels based on severity
     DEFAULT_CHANNELS = {
         ReminderSeverity.CRITICAL: ["push", "email"],
@@ -46,7 +54,8 @@ class ReminderService:
         self,
         task: Task,
         db: Session,
-        channels: Optional[List[str]] = None
+        channels: Optional[List[str]] = None,
+        schedule_type: str = "priority"
     ) -> List[Reminder]:
         """
         Create reminders for a task based on its priority and due date
@@ -55,16 +64,18 @@ class ReminderService:
             task: Task to create reminders for
             db: Database session
             channels: Custom notification channels (overrides defaults)
+            schedule_type: "priority" (default) or "contract"
 
         Returns:
             List of created Reminder objects
         """
         if not task.due_date:
-            # No due date, no reminders
             return []
 
-        # Get reminder schedule for task priority
-        schedule = self.REMINDER_SCHEDULE.get(task.priority, self.REMINDER_SCHEDULE["medium"])
+        if schedule_type == "contract":
+            schedule = self.CONTRACT_REMINDER_SCHEDULE
+        else:
+            schedule = self.REMINDER_SCHEDULE.get(task.priority, self.REMINDER_SCHEDULE["medium"])
 
         created_reminders = []
 

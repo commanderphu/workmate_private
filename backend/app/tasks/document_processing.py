@@ -160,7 +160,9 @@ def process_document(document_id: str):
 
                 if metadata.get("action_required", False):
                     reminder_service = ReminderService()
-                    reminder_service.create_reminders_for_task(new_task, db)
+                    doc_type = metadata.get("type", "other")
+                    schedule = "contract" if doc_type == "contract" else "priority"
+                    reminder_service.create_reminders_for_task(new_task, db, schedule_type=schedule)
 
                 task_created = True
             else:

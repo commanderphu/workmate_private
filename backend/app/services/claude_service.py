@@ -78,6 +78,24 @@ class ClaudeService:
         elif doc_type == "reminder":
             task_title = f"DRINGEND: {title} bezahlen"
             task_description = f"Mahnung! Sofort bezahlen: {amount} {metadata.get('currency', 'EUR')}"
+        elif doc_type == "contract":
+            partner = metadata.get("contract_partner") or metadata.get("sender", {}).get("name", "Unbekannt")
+            deadline = metadata.get("cancellation_deadline") or metadata.get("due_date")
+            monthly = metadata.get("monthly_cost")
+            cost_hint = f" ({monthly} EUR/Monat)" if monthly else ""
+            renewal_hint = " – Achtung: automatische Verlängerung!" if metadata.get("auto_renewal") else ""
+            task_title = f"Kündigung prüfen: {partner}{cost_hint}"
+            task_description = (
+                f"Kündigungsfrist für Vertrag mit {partner} endet am {deadline}.{renewal_hint} "
+                f"Kündigung rechtzeitig schriftlich einreichen."
+            )
+            return {
+                "title": task_title,
+                "description": task_description,
+                "due_date": deadline,
+                "priority": metadata.get("priority", "medium"),
+                "amount": monthly,
+            }
         elif doc_type == "identity_document":
             due_date = metadata.get("due_date")
             task_title = f"{title} verlängern / erneuern"
@@ -136,7 +154,14 @@ Return ONLY a valid JSON object with these fields:
   "action_required": true|false,
   "priority": "low|medium|high|critical",
   "suggested_task": {{"title": "...", "description": "...", "due_date": "YYYY-MM-DD or null"}},
-  "ocr_quality": "high|medium|low"
+  "ocr_quality": "high|medium|low",
+  "contract_start": "YYYY-MM-DD or null (only for contract type)",
+  "contract_end": "YYYY-MM-DD or null (only for contract type)",
+  "notice_period_days": number or null,
+  "cancellation_deadline": "YYYY-MM-DD or null (contract_end minus notice_period)",
+  "auto_renewal": true|false|null,
+  "monthly_cost": number or null,
+  "contract_partner": "company name or null"
 }}
 
 Type guide: invoice=Rechnung, reminder=Mahnung, contract=Vertrag, receipt=Quittung/Kassenbon,
@@ -201,12 +226,20 @@ Return ONLY a valid JSON object with these fields:
   "description": "Brief summary",
   "action_required": true|false,
   "priority": "low|medium|high|critical",
-  "suggested_task": {{"title": "...", "description": "...", "due_date": "YYYY-MM-DD or null"}}
+  "suggested_task": {{"title": "...", "description": "...", "due_date": "YYYY-MM-DD or null"}},
+  "contract_start": "YYYY-MM-DD or null",
+  "contract_end": "YYYY-MM-DD or null",
+  "notice_period_days": number or null,
+  "cancellation_deadline": "YYYY-MM-DD or null",
+  "auto_renewal": true|false|null,
+  "monthly_cost": number or null,
+  "contract_partner": "company name or null"
 }}
 
 Type guide: invoice=Rechnung, reminder=Mahnung, contract=Vertrag, receipt=Quittung,
 tax_document=Steuerbescheid/Lohnsteuerbescheinigung, payslip=Gehaltsabrechnung,
 insurance=Versicherung, bank_statement=Kontoauszug, letter=Behördenpost/Brief,
 identity_document=Personalausweis/Reisepass/Führerschein (use due_date for expiry), other=rest.
+For contract: extract Kündigungsfrist, calculate cancellation_deadline=contract_end-notice_period_days, action_required=true if cancellation_deadline within 60 days.
 For identity_document: action_required=true if expiry within 6 months.
 Rules: Return ONLY JSON. Use null for missing values. German documents are common."""
