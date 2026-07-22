@@ -61,7 +61,7 @@ class ThemeProvider extends ChangeNotifier {
         bodySmall:      base.bodySmall?.copyWith(color: WmColors.textSecondaryDark),
         labelSmall:     base.labelSmall?.copyWith(color: WmColors.textSecondaryDark, fontWeight: FontWeight.w600),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: WmColors.surfaceDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -150,7 +150,7 @@ class ThemeProvider extends ChangeNotifier {
         bodySmall:      base.bodySmall?.copyWith(color: WmColors.textSecondaryLight),
         labelSmall:     base.labelSmall?.copyWith(color: WmColors.textSecondaryLight, fontWeight: FontWeight.w600),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: WmColors.surfaceLight,
         elevation: 0,
         shape: RoundedRectangleBorder(
