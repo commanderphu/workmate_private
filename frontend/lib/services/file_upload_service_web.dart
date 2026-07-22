@@ -1,27 +1,22 @@
 import 'dart:async';
-import 'dart:html' as html;
-import 'dart:typed_data';
+import 'dart:js_interop';
+
+import 'package:web/web.dart' as web;
 
 import 'file_upload_service_stub.dart';
 
-/// Web implementation of FileUploadService using dart:html
+/// Web implementation of FileUploadService using package:web (replaces dart:html)
 class FileUploadService {
-  /// Pick a file from the camera (on mobile browsers, opens camera directly)
   Future<FileUploadResult?> pickFromCamera() async {
     return _pickFile(useCamera: true);
   }
 
-  /// Pick a file from the gallery/file system
   Future<FileUploadResult?> pickFromGallery() async {
     return _pickFile(useCamera: false);
   }
 
-  /// Pick any file (PDF, images)
   Future<FileUploadResult?> pickFile() async {
-    return _pickFile(
-      useCamera: false,
-      accept: 'image/*,.pdf',
-    );
+    return _pickFile(useCamera: false, accept: 'image/*,.pdf');
   }
 
   Future<FileUploadResult?> _pickFile({
@@ -30,42 +25,50 @@ class FileUploadService {
   }) async {
     final completer = Completer<FileUploadResult?>();
 
-    // Create HTML file input element
-    final html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
-    uploadInput.accept = accept;
-
-    // On mobile browsers, this will open the camera directly
+    final input = web.HTMLInputElement();
+    input.type = 'file';
+    input.accept = accept;
     if (useCamera) {
-      uploadInput.setAttribute('capture', 'environment');
+      input.setAttribute('capture', 'environment');
     }
 
-    uploadInput.click();
+    input.addEventListener(
+      'change',
+      (web.Event _) {
+        final files = input.files;
+        if (files == null || files.length == 0) {
+          completer.complete(null);
+          return;
+        }
 
-    uploadInput.onChange.listen((e) async {
-      final files = uploadInput.files;
-      if (files == null || files.isEmpty) {
-        completer.complete(null);
-        return;
-      }
+        final file = files.item(0)!;
+        final reader = web.FileReader();
 
-      final file = files[0];
-      final reader = html.FileReader();
+        reader.addEventListener(
+          'loadend',
+          (web.Event _) {
+            final result = reader.result;
+            if (result == null) {
+              completer.complete(null);
+              return;
+            }
+            final bytes = (result as JSArrayBuffer).toDart.asUint8List();
+            completer.complete(
+              FileUploadResult(bytes: bytes, filename: file.name),
+            );
+          }.toJS,
+        );
 
-      reader.readAsArrayBuffer(file);
-      reader.onLoadEnd.listen((e) async {
-        final bytes = reader.result as Uint8List;
+        reader.addEventListener(
+          'error',
+          ((web.Event _) => completer.complete(null)).toJS,
+        );
 
-        completer.complete(FileUploadResult(
-          bytes: bytes,
-          filename: file.name,
-        ));
-      });
+        reader.readAsArrayBuffer(file);
+      }.toJS,
+    );
 
-      reader.onError.listen((e) {
-        completer.complete(null);
-      });
-    });
-
+    input.click();
     return completer.future;
   }
 }

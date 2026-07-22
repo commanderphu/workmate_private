@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'file_upload_service_stub.dart';
@@ -33,7 +34,7 @@ class FileUploadService {
       // Request camera permission
       final hasPermission = await _requestCameraPermission();
       if (!hasPermission) {
-        print('Camera permission denied');
+        debugPrint('Camera permission denied');
         throw Exception('Kamera-Berechtigung wurde verweigert');
       }
 
@@ -53,7 +54,7 @@ class FileUploadService {
         filename: photo.name,
       );
     } catch (e) {
-      print('Error picking from camera: $e');
+      debugPrint('Error picking from camera: $e');
       rethrow;
     }
   }
@@ -64,7 +65,7 @@ class FileUploadService {
       // Request photos permission
       final hasPermission = await _requestPhotosPermission();
       if (!hasPermission) {
-        print('Photos permission denied');
+        debugPrint('Photos permission denied');
         throw Exception('Foto-Berechtigung wurde verweigert');
       }
 
@@ -83,7 +84,7 @@ class FileUploadService {
         filename: image.name,
       );
     } catch (e) {
-      print('Error picking from gallery: $e');
+      debugPrint('Error picking from gallery: $e');
       rethrow;
     }
   }
@@ -94,7 +95,7 @@ class FileUploadService {
       // Request storage permission for file access
       final hasPermission = await _requestPhotosPermission();
       if (!hasPermission) {
-        print('Storage permission denied');
+        debugPrint('Storage permission denied');
         throw Exception('Speicher-Berechtigung wurde verweigert');
       }
 
@@ -125,7 +126,7 @@ class FileUploadService {
         filename: pickedFile.name,
       );
     } catch (e) {
-      print('Error picking file: $e');
+      debugPrint('Error picking file: $e');
       rethrow;
     }
   }
