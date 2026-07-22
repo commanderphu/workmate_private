@@ -173,6 +173,12 @@ class _DashboardPageState extends State<DashboardPage> {
     return Row(
       children: [
         Expanded(
+            child: _buildStatCard(
+                'Gesamt', total.toString(), Icons.list_alt, Colors.purple)),
+        const SizedBox(
+          width: 12,
+        ),
+        Expanded(
           child: _buildStatCard(
             'Offen',
             open.toString(),
@@ -202,7 +208,8 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, IconData icon, Color color) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -395,7 +402,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const DocumentsPage()),
+                    MaterialPageRoute(
+                        builder: (context) => const DocumentsPage()),
                   );
                 },
               ),
@@ -414,7 +422,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const DocumentsPage()),
+                    MaterialPageRoute(
+                        builder: (context) => const DocumentsPage()),
                   );
                 },
               ),
@@ -541,7 +550,8 @@ class _DashboardPageState extends State<DashboardPage> {
             },
           ),
           ListTile(
-            leading: Icon(Icons.calendar_today, color: themeProvider.accentColor),
+            leading:
+                Icon(Icons.calendar_today, color: themeProvider.accentColor),
             title: const Text('Calendar'),
             onTap: () {
               Navigator.pop(context);
