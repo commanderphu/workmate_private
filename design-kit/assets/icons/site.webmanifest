@@ -1,0 +1,20 @@
+{
+  "name": "Workmate Private",
+  "short_name": "Workmate",
+  "description": "Dein Open-Source-Assistent für Dokumente, Fristen und Organisation.",
+  "icons": [
+    {
+      "src": "/icons/workmate-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/workmate-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#1E1E1E",
+  "background_color": "#1E1E1E",
+  "display": "standalone"
+}

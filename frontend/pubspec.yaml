@@ -48,3 +48,7 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+    - assets/branding/workmate-logo-horizontal-dark.svg
+    - assets/branding/workmate-logo-horizontal-light.svg
+    - assets/branding/workmate-app-icon.svg
+    - assets/branding/workmate-monochrome.svg

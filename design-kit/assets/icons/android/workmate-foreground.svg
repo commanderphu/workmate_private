@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080">
+  <defs>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FDBA1F"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(28 28)">
+    <path d="M264 190 C264 150 296 118 336 118 H678 L790 230 V690
+             C790 734 754 770 710 770 H550 L466 846
+             C442 868 404 850 408 818 L414 770 H336
+             C296 770 264 738 264 698 Z" fill="url(#amber)"/>
+    <path d="M678 118 V214 C678 238 698 258 722 258 H790"
+          fill="#FFD27A" opacity=".92"/>
+    <path d="M342 372 L402 372 L448 574 L506 422 L566 422 L622 574
+             L672 372 L734 372 L654 650 C648 672 632 686 610 686 H596
+             L536 532 L476 686 H452 C430 686 414 672 408 650 Z"
+          fill="#FFFFFF"/>
+    <path d="M570 526 L642 596 L786 406" fill="none" stroke="#FFFFFF"
+          stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="650" y="694" width="74" height="18" rx="9" fill="#10B981"/>
+    <rect x="650" y="728" width="48" height="18" rx="9" fill="#10B981" opacity=".82"/>
+  </g>
+</svg>
