@@ -55,6 +55,12 @@ htmlcov/
 firebase-credentials.json
 google-services.json
 
+# Android Signing
+*.jks
+*.keystore
+*.apk
+*.aab
+
 # Celery runtime
 backend/celerybeat-schedule
 backend/celerybeat-schedule.db
