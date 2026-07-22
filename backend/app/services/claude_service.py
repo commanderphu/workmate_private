@@ -62,13 +62,14 @@ class ClaudeService:
 
     def generate_task_suggestion(self, metadata: dict) -> Optional[dict]:
         """Generate a suggested task based on document metadata."""
-        if not metadata.get("action_required", False):
-            return None
-
         if "suggested_task" in metadata and metadata["suggested_task"]:
             return metadata["suggested_task"]
 
         doc_type = metadata.get("type", "document")
+
+        # Contracts always get a task (Kündigungsfrist must not be missed)
+        if doc_type != "contract" and not metadata.get("action_required", False):
+            return None
         title = metadata.get("title", "Unbekanntes Dokument")
         amount = metadata.get("amount")
 

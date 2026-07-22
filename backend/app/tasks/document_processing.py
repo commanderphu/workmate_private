@@ -134,8 +134,12 @@ def process_document(document_id: str):
 
         # Step 4: Auto-create task if action required OR a suggested_task exists
         task_created = False
+        doc_type = metadata.get("type", "other")
+        always_suggest = doc_type in ("contract", "identity_document")
         task_suggestion = metadata.get("suggested_task") or (
-            claude_service.generate_task_suggestion(metadata) if metadata.get("action_required", False) else None
+            claude_service.generate_task_suggestion(metadata)
+            if (metadata.get("action_required", False) or always_suggest)
+            else None
         )
 
         if task_suggestion:
@@ -158,9 +162,8 @@ def process_document(document_id: str):
                 db.commit()
                 db.refresh(new_task)
 
-                if metadata.get("action_required", False):
+                if metadata.get("action_required", False) or doc_type in ("contract", "identity_document"):
                     reminder_service = ReminderService()
-                    doc_type = metadata.get("type", "other")
                     schedule = "contract" if doc_type == "contract" else "priority"
                     reminder_service.create_reminders_for_task(new_task, db, schedule_type=schedule)
 
