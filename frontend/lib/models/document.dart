@@ -65,6 +65,16 @@ class Document {
         return 'Vertrag';
       case 'receipt':
         return 'Quittung';
+      case 'tax_document':
+        return 'Steuerdokument';
+      case 'payslip':
+        return 'Gehaltsabrechnung';
+      case 'insurance':
+        return 'Versicherung';
+      case 'bank_statement':
+        return 'Kontoauszug';
+      case 'letter':
+        return 'Brief / Behörde';
       default:
         return 'Sonstiges';
     }

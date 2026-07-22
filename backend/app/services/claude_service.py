@@ -115,7 +115,7 @@ class ClaudeService:
 
 Return ONLY a valid JSON object with these fields:
 {{
-  "type": "invoice|reminder|contract|receipt|other",
+  "type": "invoice|reminder|contract|receipt|tax_document|payslip|insurance|bank_statement|letter|other",
   "title": "Short descriptive title",
   "confidence": 0.0-1.0,
   "extracted_text": "Full OCR text from the image",
@@ -135,8 +135,11 @@ Return ONLY a valid JSON object with these fields:
   "ocr_quality": "high|medium|low"
 }}
 
+Type guide: invoice=Rechnung, reminder=Mahnung, contract=Vertrag, receipt=Quittung/Kassenbon,
+tax_document=Steuerbescheid/Lohnsteuerbescheinigung/Steuererklärung, payslip=Gehaltsabrechnung/Lohnabrechnung,
+insurance=Versicherungspolice/Schadensmeldung, bank_statement=Kontoauszug, letter=Behördenpost/Brief, other=rest.
 Rules: Return ONLY JSON. Use null for missing values. Extract ALL visible text.
-German documents are common. Priority: critical=Mahnung/overdue, high=due soon, medium=invoice, low=receipt."""
+Priority: critical=Mahnung/overdue, high=due soon, medium=invoice/tax, low=receipt/statement."""
 
     def analyze_for_paperless(self, text: str) -> dict:
         """Analyze Paperless-ngx document: return summary + suggested tags."""
@@ -180,7 +183,7 @@ DOCUMENT TEXT:
 
 Return ONLY a valid JSON object with these fields:
 {{
-  "type": "invoice|reminder|contract|receipt|other",
+  "type": "invoice|reminder|contract|receipt|tax_document|payslip|insurance|bank_statement|letter|other",
   "title": "Short descriptive title",
   "confidence": 0.0-1.0,
   "sender": {{"name": "...", "address": "..."}},
@@ -194,4 +197,7 @@ Return ONLY a valid JSON object with these fields:
   "suggested_task": {{"title": "...", "description": "...", "due_date": "YYYY-MM-DD or null"}}
 }}
 
+Type guide: invoice=Rechnung, reminder=Mahnung, contract=Vertrag, receipt=Quittung,
+tax_document=Steuerbescheid/Lohnsteuerbescheinigung, payslip=Gehaltsabrechnung,
+insurance=Versicherung, bank_statement=Kontoauszug, letter=Behördenpost/Brief, other=rest.
 Rules: Return ONLY JSON. Use null for missing values. German documents are common."""
