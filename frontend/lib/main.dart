@@ -8,6 +8,7 @@ import 'providers/auth_provider.dart';
 import 'providers/document_provider.dart';
 import 'providers/task_provider.dart';
 import 'providers/theme_provider.dart';
+import 'config/api_config.dart';
 import 'pages/dashboard_page.dart';
 import 'pages/login_page.dart';
 import 'services/push_notification_service.dart';
@@ -18,6 +19,7 @@ void main() async {
 
   // Load environment variables
   await dotenv.load(fileName: '.env');
+  await ApiConfig.init();
 
   // Initialize Firebase (requires google-services.json / GoogleService-Info.plist)
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

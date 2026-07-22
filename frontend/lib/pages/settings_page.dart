@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import '../config/api_config.dart';
+import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
 import '../utils/gravatar.dart';
@@ -20,6 +22,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // Profil
   late TextEditingController _fullNameCtrl;
+
+  // Verbindung
+  late TextEditingController _apiUrlCtrl;
 
   // Paperless
   late TextEditingController _paperlessUrlCtrl;
@@ -41,6 +46,7 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     _fullNameCtrl = TextEditingController();
+    _apiUrlCtrl = TextEditingController(text: ApiConfig.baseUrl);
     _paperlessUrlCtrl = TextEditingController();
     _paperlessTokenCtrl = TextEditingController();
     _loadUser();
@@ -49,6 +55,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void dispose() {
     _fullNameCtrl.dispose();
+    _apiUrlCtrl.dispose();
     _paperlessUrlCtrl.dispose();
     _paperlessTokenCtrl.dispose();
     super.dispose();
@@ -67,6 +74,17 @@ class _SettingsPageState extends State<SettingsPage> {
       _timezone = user.timezone;
       _language = user.language;
     });
+  }
+
+  Future<void> _saveApiUrl() async {
+    final url = _apiUrlCtrl.text.trim();
+    await ApiConfig.setBaseUrl(url);
+    ApiService().updateBaseUrl(ApiConfig.baseUrl);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('API-URL gespeichert – App neu starten empfohlen')),
+      );
+    }
   }
 
   Future<void> _save() async {
@@ -137,6 +155,8 @@ class _SettingsPageState extends State<SettingsPage> {
           : ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
+                _sectionHeader(context, 'Verbindung', Icons.cloud),
+                _buildVerbindung(theme),
                 _sectionHeader(context, 'Profil', Icons.person),
                 _buildProfil(theme),
                 _sectionHeader(context, 'Paperless NGX', Icons.folder_copy),
@@ -168,6 +188,40 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildVerbindung(ThemeData theme) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _apiUrlCtrl,
+              keyboardType: TextInputType.url,
+              autocorrect: false,
+              decoration: const InputDecoration(
+                labelText: 'API URL',
+                hintText: 'https://api.example.com/api/v1',
+                prefixIcon: Icon(Icons.dns),
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _saveApiUrl,
+                icon: const Icon(Icons.save),
+                label: const Text('API URL speichern'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

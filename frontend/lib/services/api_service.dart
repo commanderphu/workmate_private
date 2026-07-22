@@ -9,6 +9,10 @@ class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
 
+  void updateBaseUrl(String url) {
+    _dio.options.baseUrl = url;
+  }
+
   ApiService._internal() {
     _dio = Dio(
       BaseOptions(
