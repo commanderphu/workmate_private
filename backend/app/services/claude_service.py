@@ -78,6 +78,10 @@ class ClaudeService:
         elif doc_type == "reminder":
             task_title = f"DRINGEND: {title} bezahlen"
             task_description = f"Mahnung! Sofort bezahlen: {amount} {metadata.get('currency', 'EUR')}"
+        elif doc_type == "identity_document":
+            due_date = metadata.get("due_date")
+            task_title = f"{title} verlängern / erneuern"
+            task_description = f"Dokument läuft ab: {due_date}. Rechtzeitig Termin beim Bürgeramt buchen."
         else:
             task_title = f"{title} bearbeiten"
             task_description = f"Dokument '{title}' bearbeiten"
@@ -115,7 +119,7 @@ class ClaudeService:
 
 Return ONLY a valid JSON object with these fields:
 {{
-  "type": "invoice|reminder|contract|receipt|tax_document|payslip|insurance|bank_statement|letter|other",
+  "type": "invoice|reminder|contract|receipt|tax_document|payslip|insurance|bank_statement|letter|identity_document|other",
   "title": "Short descriptive title",
   "confidence": 0.0-1.0,
   "extracted_text": "Full OCR text from the image",
@@ -137,8 +141,11 @@ Return ONLY a valid JSON object with these fields:
 
 Type guide: invoice=Rechnung, reminder=Mahnung, contract=Vertrag, receipt=Quittung/Kassenbon,
 tax_document=Steuerbescheid/Lohnsteuerbescheinigung/Steuererklärung, payslip=Gehaltsabrechnung/Lohnabrechnung,
-insurance=Versicherungspolice/Schadensmeldung, bank_statement=Kontoauszug, letter=Behördenpost/Brief, other=rest.
+insurance=Versicherungspolice/Schadensmeldung, bank_statement=Kontoauszug, letter=Behördenpost/Brief,
+identity_document=Personalausweis/Reisepass/Führerschein/Krankenversicherungskarte (use due_date for expiry date),
+other=rest.
 Rules: Return ONLY JSON. Use null for missing values. Extract ALL visible text.
+For identity_document: set action_required=true if expiry within 6 months, priority=high if within 3 months.
 Priority: critical=Mahnung/overdue, high=due soon, medium=invoice/tax, low=receipt/statement."""
 
     def analyze_for_paperless(self, text: str) -> dict:
@@ -183,7 +190,7 @@ DOCUMENT TEXT:
 
 Return ONLY a valid JSON object with these fields:
 {{
-  "type": "invoice|reminder|contract|receipt|tax_document|payslip|insurance|bank_statement|letter|other",
+  "type": "invoice|reminder|contract|receipt|tax_document|payslip|insurance|bank_statement|letter|identity_document|other",
   "title": "Short descriptive title",
   "confidence": 0.0-1.0,
   "sender": {{"name": "...", "address": "..."}},
@@ -199,5 +206,7 @@ Return ONLY a valid JSON object with these fields:
 
 Type guide: invoice=Rechnung, reminder=Mahnung, contract=Vertrag, receipt=Quittung,
 tax_document=Steuerbescheid/Lohnsteuerbescheinigung, payslip=Gehaltsabrechnung,
-insurance=Versicherung, bank_statement=Kontoauszug, letter=Behördenpost/Brief, other=rest.
+insurance=Versicherung, bank_statement=Kontoauszug, letter=Behördenpost/Brief,
+identity_document=Personalausweis/Reisepass/Führerschein (use due_date for expiry), other=rest.
+For identity_document: action_required=true if expiry within 6 months.
 Rules: Return ONLY JSON. Use null for missing values. German documents are common."""

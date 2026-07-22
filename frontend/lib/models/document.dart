@@ -75,6 +75,8 @@ class Document {
         return 'Kontoauszug';
       case 'letter':
         return 'Brief / Behörde';
+      case 'identity_document':
+        return 'Ausweis / Pass';
       default:
         return 'Sonstiges';
     }
