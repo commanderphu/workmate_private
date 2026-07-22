@@ -132,37 +132,39 @@ def process_document(document_id: str):
         if review_reason:
             document.doc_metadata["qa_review_reason"] = review_reason
 
-        # Step 4: Auto-create task if action required and confidence is sufficient
+        # Step 4: Auto-create task if action required OR a suggested_task exists
         task_created = False
-        if metadata.get("action_required", False):
-            task_suggestion = claude_service.generate_task_suggestion(metadata)
+        task_suggestion = metadata.get("suggested_task") or (
+            claude_service.generate_task_suggestion(metadata) if metadata.get("action_required", False) else None
+        )
 
-            if task_suggestion:
-                # Only auto-create tasks if confidence is high, or mark for review
-                if ai_confidence >= CONFIDENCE_THRESHOLDS["medium"] or not needs_review:
-                    new_task = TaskModel(
-                        user_id=document.user_id,
-                        document_id=document.id,
-                        title=task_suggestion.get("title", "Dokument bearbeiten"),
-                        description=task_suggestion.get("description", ""),
-                        due_date=_parse_date(task_suggestion.get("due_date")),
-                        priority=task_suggestion.get("priority", "medium"),
-                        amount=task_suggestion.get("amount"),
-                        currency=metadata.get("currency", "EUR"),
-                        status="open",
-                    )
-                    db.add(new_task)
-                    db.commit()
-                    db.refresh(new_task)  # Refresh to get the ID
+        if task_suggestion:
+            # action_required → normal priority; suggested_task only → low priority
+            default_priority = task_suggestion.get("priority", "medium") if metadata.get("action_required", False) else "low"
 
-                    # Create reminders for the task
+            if ai_confidence >= CONFIDENCE_THRESHOLDS["medium"] or not needs_review:
+                new_task = TaskModel(
+                    user_id=document.user_id,
+                    document_id=document.id,
+                    title=task_suggestion.get("title", "Dokument bearbeiten"),
+                    description=task_suggestion.get("description", ""),
+                    due_date=_parse_date(task_suggestion.get("due_date")),
+                    priority=default_priority,
+                    amount=task_suggestion.get("amount"),
+                    currency=metadata.get("currency", "EUR"),
+                    status="open",
+                )
+                db.add(new_task)
+                db.commit()
+                db.refresh(new_task)
+
+                if metadata.get("action_required", False):
                     reminder_service = ReminderService()
-                    reminders = reminder_service.create_reminders_for_task(new_task, db)
+                    reminder_service.create_reminders_for_task(new_task, db)
 
-                    task_created = True
-                else:
-                    # Store task suggestion for manual review
-                    document.doc_metadata["suggested_task"] = task_suggestion
+                task_created = True
+            else:
+                document.doc_metadata["suggested_task"] = task_suggestion
 
         # Mark processing as complete or needs_review
         if needs_review:
