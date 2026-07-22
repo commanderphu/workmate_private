@@ -26,7 +26,7 @@ class _DocumentDetailPageState extends State<DocumentDetailPage> {
   @override
   void initState() {
     super.initState();
-    _loadDocument();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDocument());
   }
 
   Future<void> _loadDocument() async {

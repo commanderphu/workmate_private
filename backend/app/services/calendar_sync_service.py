@@ -195,7 +195,7 @@ class CalendarSyncService:
 
                         elif local_event.last_synced_at and ext_event.get('last_modified'):
                             # Remote is newer - update local
-                            if ext_event['last_modified'] > local_event.last_synced_at:
+                            if self._to_utc(ext_event['last_modified']) > self._to_utc(local_event.last_synced_at):
                                 self._update_local_event(local_event, ext_event)
                                 result.events_updated += 1
                                 logger.info(f"Updated local event {local_event.id} from remote")
@@ -295,6 +295,14 @@ class CalendarSyncService:
             result.errors += 1
             result.error_messages.append(f"Push error: {str(e)}")
 
+    @staticmethod
+    def _to_utc(dt: datetime) -> datetime:
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt
+
     def _detect_conflict(self, local_event: CalendarEvent, external_event: Dict) -> bool:
         """
         Detect if there's a conflict between local and external event
@@ -305,13 +313,15 @@ class CalendarSyncService:
         if not local_event.last_synced_at:
             return False
 
+        last_synced = self._to_utc(local_event.last_synced_at)
+
         # Check if local event was modified after last sync
-        local_modified = local_event.updated_at > local_event.last_synced_at
+        local_modified = self._to_utc(local_event.updated_at) > last_synced
 
         # Check if external event was modified after last sync
         external_modified = False
         if external_event.get('last_modified'):
-            external_modified = external_event['last_modified'] > local_event.last_synced_at
+            external_modified = self._to_utc(external_event['last_modified']) > last_synced
 
         # Conflict if both were modified
         return local_modified and external_modified
