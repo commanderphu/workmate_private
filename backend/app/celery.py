@@ -14,6 +14,7 @@ celery_app = Celery(
         "app.tasks.reminder_dispatch",
         "app.tasks.paperless_sync",
         "app.tasks.paperless_analyze",
+        "app.tasks.calendar_sync",
     ],
 )
 
@@ -34,5 +35,9 @@ celery_app.conf.beat_schedule = {
     "paperless-sync": {
         "task": "app.tasks.paperless_sync",
         "schedule": 1800.0,  # every 30 minutes
+    },
+    "calendar-sync": {
+        "task": "app.tasks.calendar_sync",
+        "schedule": 900.0,  # every 15 minutes
     },
 }

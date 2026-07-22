@@ -28,7 +28,7 @@ def paperless_sync():
     db = SessionLocal()
     try:
         users = db.query(User).filter(User.is_active == True).all()
-        since = datetime.utcnow() - timedelta(hours=1)
+        since = datetime.utcnow() - timedelta(hours=48)
 
         for user in users:
             try:
