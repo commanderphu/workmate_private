@@ -36,6 +36,7 @@ class Settings(BaseSettings):
         "http://localhost:8080",
         "http://192.168.178.100:3000",
         "https://workmate-private.phudevelopement.xyz",
+        "https://workmate-private.intern.phudevelopement.xyz",
     ]
 
     @field_validator("ALLOWED_ORIGINS", mode="before")

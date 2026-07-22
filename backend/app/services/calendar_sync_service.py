@@ -4,7 +4,7 @@ Handles bidirectional synchronization between local calendar events and external
 """
 
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Tuple, Optional
 import logging
 
@@ -435,7 +435,11 @@ class CalendarSyncService:
 
                         elif local_event.last_synced_at and ext_event.get('last_modified'):
                             # Remote is newer - update local
-                            if ext_event['last_modified'] > local_event.last_synced_at:
+                            last_synced = local_event.last_synced_at.replace(tzinfo=timezone.utc) if local_event.last_synced_at.tzinfo is None else local_event.last_synced_at
+                            last_modified = ext_event['last_modified']
+                            if last_modified.tzinfo is None:
+                                last_modified = last_modified.replace(tzinfo=timezone.utc)
+                            if last_modified > last_synced:
                                 local_event.title = ext_event['title']
                                 local_event.description = ext_event.get('description', '')
                                 local_event.start_time = ext_event['start_time']
@@ -491,10 +495,14 @@ class CalendarSyncService:
         Only pushes events that need syncing (pending or modified)
         """
         try:
-            # Find all events that need to be pushed
+            # Find all events that need to be pushed (including AI-created events without external_calendar_id)
+            from sqlalchemy import or_
             pending_events = self.db.query(CalendarEvent).filter(
                 CalendarEvent.user_id == user.id,
-                CalendarEvent.external_calendar_id == integration.id,
+                or_(
+                    CalendarEvent.external_calendar_id == integration.id,
+                    CalendarEvent.external_calendar_id == None
+                ),
                 CalendarEvent.sync_status == CalendarSyncStatus.PENDING
             ).all()
 
