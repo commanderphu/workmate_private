@@ -55,9 +55,9 @@ class PaperlessClient:
         page: int = 1,
         page_size: int = 50,
     ) -> Dict:
-        params = {"page": page, "page_size": page_size, "ordering": "-created"}
+        params = {"page": page, "page_size": page_size, "ordering": "-added"}
         if created_after:
-            params["created__date__gte"] = created_after.strftime("%Y-%m-%d")
+            params["added__date__gte"] = created_after.strftime("%Y-%m-%d")
         return await self._get("/documents/", params=params)
 
     async def get_document(self, document_id: int) -> Dict:
