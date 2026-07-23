@@ -39,6 +39,7 @@ class CalendarEventUpdate(BaseModel):
 
 class CalendarEventResponse(CalendarEventBase):
     """Schema for calendar event response"""
+    title: str = ""  # Google Calendar kann leere Titel liefern
     id: uuid.UUID
     user_id: uuid.UUID
     task_id: Optional[uuid.UUID]
