@@ -2,10 +2,11 @@
 Authentication endpoints
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from datetime import datetime
 import secrets
+import uuid
 
 from ...db.session import get_db
 from ...schemas import UserCreate, UserResponse, UserSettingsUpdate, UserLogin, Token
@@ -137,6 +138,37 @@ def update_settings(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.post("/refresh", response_model=Token)
+def refresh_access_token(request: Request, db: Session = Depends(get_db)):
+    """
+    Neuen Access-Token per Refresh-Token holen.
+    Header: Authorization: Bearer <refresh_token>
+    """
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token fehlt")
+
+    token = auth_header[7:]
+    payload = decode_token(token)
+
+    if not payload or payload.get("type") != "refresh":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Ungültiger Refresh-Token")
+
+    try:
+        user_id = uuid.UUID(payload.get("sub", ""))
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Ungültiger Token-Inhalt")
+
+    user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Benutzer nicht gefunden")
+
+    access_token = create_access_token(data={"sub": str(user.id)})
+    new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
+
+    return Token(access_token=access_token, refresh_token=new_refresh_token, token_type="bearer")
 
 
 @router.post("/logout")
