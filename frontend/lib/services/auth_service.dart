@@ -13,28 +13,43 @@ class AuthService {
   AuthService._internal();
 
   // Login
-  Future<User> login(String username, String password) async {
+  Future<User> login(String username, String password, {bool stayLoggedIn = true}) async {
     final response = await _apiService.post(
       ApiConfig.authLogin,
-      data: {
-        'username': username,
-        'password': password,
-      },
+      data: {'username': username, 'password': password},
     );
 
     final data = response.data;
-    final token = data['access_token'] as String;
+    await _storage.write(key: 'access_token', value: data['access_token'] as String);
+    if (stayLoggedIn) {
+      await _storage.write(key: 'refresh_token', value: data['refresh_token'] as String);
+      await _storage.write(key: 'stay_logged_in', value: 'true');
+    } else {
+      await _storage.delete(key: 'refresh_token');
+      await _storage.delete(key: 'stay_logged_in');
+    }
 
-    // Store token
-    await _storage.write(key: 'access_token', value: token);
-
-    // Get user data
     final user = await getCurrentUser();
-
-    // Store user data
     await _storage.write(key: 'user_data', value: jsonEncode(user.toJson()));
-
     return user;
+  }
+
+  // Refresh access token using stored refresh token
+  Future<bool> refreshToken() async {
+    final refreshToken = await _storage.read(key: 'refresh_token');
+    if (refreshToken == null) return false;
+
+    try {
+      final response = await _apiService.postWithHeader(
+        ApiConfig.authRefresh,
+        headers: {'Authorization': 'Bearer $refreshToken'},
+      );
+      await _storage.write(key: 'access_token', value: response.data['access_token'] as String);
+      await _storage.write(key: 'refresh_token', value: response.data['refresh_token'] as String);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   // Register
@@ -65,18 +80,21 @@ class AuthService {
   Future<void> logout() async {
     try {
       await _apiService.post(ApiConfig.authLogout);
-    } catch (e) {
-      // Ignore errors on logout
+    } catch (_) {
     } finally {
       await _storage.delete(key: 'access_token');
+      await _storage.delete(key: 'refresh_token');
+      await _storage.delete(key: 'stay_logged_in');
       await _storage.delete(key: 'user_data');
     }
   }
 
-  // Check if logged in
+  // Check if logged in (access token OR refresh token present)
   Future<bool> isLoggedIn() async {
-    final token = await _storage.read(key: 'access_token');
-    return token != null;
+    final access = await _storage.read(key: 'access_token');
+    if (access != null) return true;
+    final refresh = await _storage.read(key: 'refresh_token');
+    return refresh != null;
   }
 
   // Get stored user

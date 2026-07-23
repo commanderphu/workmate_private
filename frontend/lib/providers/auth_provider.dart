@@ -52,13 +52,13 @@ class AuthProvider with ChangeNotifier {
   }
 
   // Login
-  Future<bool> login(String username, String password) async {
+  Future<bool> login(String username, String password, {bool stayLoggedIn = true}) async {
     _status = AuthStatus.loading;
     _error = null;
     notifyListeners();
 
     try {
-      _user = await _authService.login(username, password);
+      _user = await _authService.login(username, password, stayLoggedIn: stayLoggedIn);
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;

@@ -18,6 +18,7 @@ class _LoginPageState extends State<LoginPage>
   final _loginUsernameController = TextEditingController();
   final _loginPasswordController = TextEditingController();
   bool _loginPasswordVisible = false;
+  bool _stayLoggedIn = true;
 
   // Register
   final _registerFormKey = GlobalKey<FormState>();
@@ -51,6 +52,7 @@ class _LoginPageState extends State<LoginPage>
       final success = await authProvider.login(
         _loginUsernameController.text.trim(),
         _loginPasswordController.text,
+        stayLoggedIn: _stayLoggedIn,
       );
       if (!mounted) return;
       if (!success && authProvider.error != null) {
@@ -173,7 +175,15 @@ class _LoginPageState extends State<LoginPage>
             onFieldSubmitted: (_) => _handleLogin(),
             enabled: !isLoading,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            title: const Text('Angemeldet bleiben'),
+            value: _stayLoggedIn,
+            onChanged: isLoading ? null : (v) => setState(() => _stayLoggedIn = v),
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+          ),
+          const SizedBox(height: 8),
           FilledButton(
             onPressed: isLoading ? null : _handleLogin,
             style: FilledButton.styleFrom(

@@ -33,7 +33,6 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Add auth token to requests
           final token = await _storage.read(key: 'access_token');
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
@@ -41,11 +40,40 @@ class ApiService {
           return handler.next(options);
         },
         onError: (error, handler) async {
-          // Handle 401 Unauthorized
-          if (error.response?.statusCode == 401) {
-            // Token expired, clear storage
-            await _storage.delete(key: 'access_token');
-            await _storage.delete(key: 'user_data');
+          if (error.response?.statusCode == 401 &&
+              error.requestOptions.extra['_retry'] != true) {
+            final refreshToken = await _storage.read(key: 'refresh_token');
+            if (refreshToken != null) {
+              try {
+                final refreshResponse = await _dio.post(
+                  ApiConfig.authRefresh,
+                  options: Options(
+                    headers: {'Authorization': 'Bearer $refreshToken'},
+                    extra: {'_retry': true},
+                  ),
+                );
+                final newAccess = refreshResponse.data['access_token'] as String;
+                final newRefresh = refreshResponse.data['refresh_token'] as String;
+                await _storage.write(key: 'access_token', value: newAccess);
+                await _storage.write(key: 'refresh_token', value: newRefresh);
+
+                // Retry original request with new token
+                final retryOptions = error.requestOptions;
+                retryOptions.headers['Authorization'] = 'Bearer $newAccess';
+                retryOptions.extra['_retry'] = true;
+                final retryResponse = await _dio.fetch(retryOptions);
+                return handler.resolve(retryResponse);
+              } catch (_) {
+                // Refresh failed — clear all and let the 401 propagate
+                await _storage.delete(key: 'access_token');
+                await _storage.delete(key: 'refresh_token');
+                await _storage.delete(key: 'stay_logged_in');
+                await _storage.delete(key: 'user_data');
+              }
+            } else {
+              await _storage.delete(key: 'access_token');
+              await _storage.delete(key: 'user_data');
+            }
           }
           return handler.next(error);
         },
@@ -67,6 +95,16 @@ class ApiService {
   Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
     try {
       return await _dio.post(path, data: data, queryParameters: queryParameters);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Response> postWithHeader(String path,
+      {dynamic data, required Map<String, String> headers}) async {
+    try {
+      return await _dio.post(path,
+          data: data, options: Options(headers: headers, extra: {'_retry': true}));
     } on DioException catch (e) {
       throw _handleError(e);
     }
