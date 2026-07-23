@@ -5,6 +5,7 @@ Authentication endpoints
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime
+import secrets
 
 from ...db.session import get_db
 from ...schemas import UserCreate, UserResponse, UserSettingsUpdate, UserLogin, Token
@@ -141,3 +142,26 @@ def update_settings(
 @router.post("/logout")
 def logout(current_user: User = Depends(get_current_user)):
     return {"message": "Successfully logged out"}
+
+
+@router.post("/api-key", summary="Permanenten Service-API-Key generieren")
+def generate_api_key(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Generiert einen permanenten API-Key für externe Dienste (z. B. Morning Briefing).
+    Der Key wird gespeichert und ersetzt einen eventuell vorhandenen alten Key.
+    Sende ihn als Header: X-API-Key: <key>
+    """
+    key = secrets.token_hex(32)  # 64 Zeichen hex
+    current_user.api_key = key
+    current_user.updated_at = datetime.utcnow()
+    db.commit()
+    return {"api_key": key, "hint": "Sende diesen Key als X-API-Key Header. Er ist permanent und ersetzt keinen JWT."}
+
+
+@router.get("/api-key", summary="Aktuellen API-Key anzeigen")
+def get_api_key(current_user: User = Depends(get_current_user)):
+    """Zeigt den aktuellen Service-API-Key (oder null wenn noch keiner generiert wurde)."""
+    return {"api_key": current_user.api_key}

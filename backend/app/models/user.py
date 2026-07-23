@@ -33,6 +33,9 @@ class User(Base):
     # Push Notifications
     fcm_token = Column(String(255), nullable=True)
 
+    # Service API Key (permanent, für externe Dienste wie Morning Briefing)
+    api_key = Column(String(64), nullable=True, unique=True, index=True)
+
     # Status
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
