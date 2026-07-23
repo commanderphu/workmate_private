@@ -16,7 +16,7 @@ class TaskBase(BaseModel):
     due_date: Optional[datetime] = None
     priority: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
     amount: Optional[Decimal] = None
-    currency: str = "EUR"
+    currency: Optional[str] = "EUR"
 
 
 class TaskCreate(TaskBase):
