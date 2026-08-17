@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from typing import Optional, List, Dict
 from uuid import UUID
 
+from sqlalchemy.orm.attributes import flag_modified
+
 from ..core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -83,6 +85,9 @@ class PaperlessClient:
         tags: Optional[List[int]] = None,
         custom_fields: Optional[List[Dict]] = None,
         notes: Optional[str] = None,
+        correspondent: Optional[int] = None,
+        document_type: Optional[int] = None,
+        title: Optional[str] = None,
     ) -> Dict:
         data = {}
         if tags is not None:
@@ -91,7 +96,38 @@ class PaperlessClient:
             data["custom_fields"] = custom_fields
         if notes is not None:
             data["notes"] = notes
+        if correspondent is not None:
+            data["correspondent"] = correspondent
+        if document_type is not None:
+            data["document_type"] = document_type
+        if title is not None:
+            data["title"] = title
         return await self._patch(f"/documents/{document_id}/", data=data)
+
+    async def get_correspondents(self) -> List[Dict]:
+        result = await self._get("/correspondents/", params={"page_size": 200})
+        return result.get("results", [])
+
+    async def create_correspondent(self, name: str) -> Dict:
+        return await self._post("/correspondents/", data={"name": name})
+
+    async def get_or_create_correspondent(self, name: str) -> Dict:
+        correspondents = await self.get_correspondents()
+        for c in correspondents:
+            if c["name"].lower() == name.lower():
+                return c
+        return await self.create_correspondent(name)
+
+    async def get_document_types(self) -> List[Dict]:
+        result = await self._get("/document_types/", params={"page_size": 100})
+        return result.get("results", [])
+
+    async def get_or_create_document_type(self, name: str) -> Dict:
+        types = await self.get_document_types()
+        for t in types:
+            if t["name"].lower() == name.lower():
+                return t
+        return await self._post("/document_types/", data={"name": name})
 
     async def get_or_create_tag(self, name: str) -> Dict:
         tags = await self.get_tags()
@@ -267,3 +303,80 @@ class PaperlessSyncService:
 
         logger.info(f"Write-back to Paperless doc {paperless_id} done")
         return True
+
+    async def push_workmate_changes(self) -> Dict:
+        """
+        Write task status changes from Workmate back to Paperless.
+        Sets tags 'erledigt' or 'offen' based on linked task status.
+        Only syncs docs whose tasks changed since last write-back.
+        """
+        if not self.client:
+            return {"synced": 0}
+
+        from ..models.document import Document as DocumentModel
+        from ..models.task import Task as TaskModel, TaskStatus
+
+        docs = (
+            self.db.query(DocumentModel)
+            .filter(
+                DocumentModel.user_id == self.user_id,
+                DocumentModel.processing_status == "done",
+            )
+            .all()
+        )
+
+        # Fetch all Paperless tags once to avoid repeated API calls
+        all_tags = await self.client.get_tags()
+        status_tag_names = {"erledigt", "offen"}
+        status_tag_ids = {t["id"] for t in all_tags if t["name"] in status_tag_names}
+
+        synced = 0
+        for doc in docs:
+            paperless_id = doc.doc_metadata.get("paperless_id") if doc.doc_metadata else None
+            if not paperless_id:
+                continue
+
+            linked_tasks = (
+                self.db.query(TaskModel)
+                .filter(TaskModel.document_id == doc.id)
+                .all()
+            )
+            if not linked_tasks:
+                continue
+
+            # Only sync if a task changed since last write-back
+            last_synced_str = doc.doc_metadata.get("last_synced_to_paperless")
+            if last_synced_str:
+                last_synced_dt = datetime.fromisoformat(last_synced_str)
+                if not any(t.updated_at > last_synced_dt for t in linked_tasks):
+                    continue
+
+            all_done = all(t.status == TaskStatus.DONE for t in linked_tasks)
+            status_tag_name = "erledigt" if all_done else "offen"
+
+            try:
+                pdoc = await self.client.get_document(int(paperless_id))
+                existing_tag_ids = pdoc.get("tags", [])
+                filtered = [tid for tid in existing_tag_ids if tid not in status_tag_ids]
+                new_tag = await self.client.get_or_create_tag(status_tag_name)
+                filtered.append(new_tag["id"])
+
+                await self.client.update_document(
+                    document_id=int(paperless_id),
+                    tags=filtered,
+                )
+
+                meta = dict(doc.doc_metadata)
+                meta["last_synced_to_paperless"] = datetime.utcnow().isoformat()
+                doc.doc_metadata = meta
+                flag_modified(doc, "doc_metadata")
+                synced += 1
+
+            except Exception as e:
+                logger.warning(f"Write-back to Paperless doc {paperless_id} failed: {e}")
+
+        if synced > 0:
+            self.db.commit()
+
+        logger.info(f"Paperless write-back: {synced} docs synced")
+        return {"synced": synced}

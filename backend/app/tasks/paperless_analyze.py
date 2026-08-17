@@ -83,6 +83,29 @@ def analyze_paperless_document(self, document_id: str):
             import asyncio
             asyncio.run(_write_to_paperless(int(paperless_id), result))
 
+        # Push notification
+        try:
+            from ..models.user import User
+            from ..services.push_notification_service import PushNotificationService
+            user = db.query(User).filter(User.id == doc.user_id).first()
+            if user and user.fcm_token:
+                ai_type = result.get("type", "Dokument")
+                body = f"{doc.title} ({ai_type})"
+                if result.get("action_required"):
+                    body += " ⚠️ Handlungsbedarf"
+                PushNotificationService().send(
+                    fcm_token=user.fcm_token,
+                    title="📄 Neues Dokument",
+                    body=body,
+                    data={
+                        "type": "new_document",
+                        "document_id": str(doc.id),
+                        "paperless_id": str(paperless_id),
+                    },
+                )
+        except Exception as push_err:
+            logger.warning(f"Push notification failed for document {document_id}: {push_err}")
+
         logger.info(f"Paperless AI analysis done for document {document_id}")
 
     except Exception as exc:
@@ -119,7 +142,16 @@ def _create_action_items(db, doc: DocumentModel, result: dict, due_date_str: str
     doc_type = result.get("type", "Dokument")
     summary = result.get("summary", "")
 
-    title = f"{doc_type} bezahlen: {sender}" if sender else f"{doc_type}: {doc.title}"
+    task_title_from_ai = result.get("task_title")
+    if task_title_from_ai:
+        title = task_title_from_ai
+    elif doc_type in ("Rechnung", "Mahnung") and sender:
+        amount_str = f" {amount} {result.get('currency', 'EUR')}" if amount else ""
+        title = f"{doc_type} bezahlen: {sender}{amount_str}"
+    elif sender:
+        title = f"{doc_type}: {sender}"
+    else:
+        title = doc.title
     priority = TaskPriority.HIGH if result.get("action_required") else TaskPriority.MEDIUM
 
     task = Task(
@@ -170,6 +202,18 @@ def _create_action_items(db, doc: DocumentModel, result: dict, due_date_str: str
     logger.info(f"Created task '{title}' for document {doc.id}")
 
 
+_AI_TYPE_TO_PAPERLESS_DOCTYPE = {
+    "Rechnung": "Rechnung",
+    "Mahnung": "Rechnung",
+    "Vertrag": "Verträge",
+    "Quittung": "Kaufbeleg",
+    "Behörde": "Post",
+    "Versicherung": "Verträge",
+    "Bank": "Post",
+    "Sonstiges": None,
+}
+
+
 async def _write_to_paperless(paperless_id: int, result: dict):
     client = get_paperless_client()
     if not client:
@@ -181,14 +225,26 @@ async def _write_to_paperless(paperless_id: int, result: dict):
             tag = await client.get_or_create_tag(tag_name)
             tag_ids.append(tag["id"])
 
-    doc_type = result.get("type", "")
-    if doc_type and doc_type != "Sonstiges":
-        type_tag = await client.get_or_create_tag(doc_type)
-        if type_tag["id"] not in tag_ids:
-            tag_ids.append(type_tag["id"])
+    correspondent_id = None
+    sender = result.get("sender") or ""
+    if sender:
+        try:
+            corr = await client.get_or_create_correspondent(sender)
+            correspondent_id = corr["id"]
+        except Exception as e:
+            logger.warning(f"Could not set correspondent '{sender}': {e}")
+
+    doc_type_id = None
+    ai_type = result.get("type", "")
+    paperless_type_name = _AI_TYPE_TO_PAPERLESS_DOCTYPE.get(ai_type)
+    if paperless_type_name:
+        try:
+            dt = await client.get_or_create_document_type(paperless_type_name)
+            doc_type_id = dt["id"]
+        except Exception as e:
+            logger.warning(f"Could not set document_type '{paperless_type_name}': {e}")
 
     summary = result.get("summary", "")
-    sender = result.get("sender") or ""
     amount = result.get("amount")
     due_date = result.get("due_date") or ""
 
@@ -204,10 +260,24 @@ async def _write_to_paperless(paperless_id: int, result: dict):
     if result.get("action_required"):
         note_lines.append("⚠️ Handlungsbedarf")
 
+    title_parts = []
+    if sender:
+        title_parts.append(sender)
+    if ai_type and ai_type != "Sonstiges":
+        title_parts.append(ai_type)
+    if amount:
+        title_parts.append(f"{amount} {result.get('currency', 'EUR')}")
+    if due_date:
+        title_parts.append(due_date)
+    new_title = " – ".join(title_parts) if title_parts else None
+
     await client.update_document(
         document_id=paperless_id,
         tags=tag_ids if tag_ids else None,
         notes="\n".join(note_lines),
+        correspondent=correspondent_id,
+        document_type=doc_type_id,
+        title=new_title,
     )
 
 

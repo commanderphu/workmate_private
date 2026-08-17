@@ -33,15 +33,20 @@ def paperless_sync():
         for user in users:
             try:
                 import asyncio
+                loop = asyncio.get_event_loop()
                 svc = PaperlessSyncService(db=db, user_id=user.id)
-                result = asyncio.get_event_loop().run_until_complete(
-                    svc.import_new_documents(since=since)
-                )
+
+                result = loop.run_until_complete(svc.import_new_documents(since=since))
                 if result["imported"] > 0:
                     logger.info(
                         f"Paperless sync user={user.id}: "
                         f"{result['imported']} imported, {result['skipped']} skipped"
                     )
+
+                wb = loop.run_until_complete(svc.push_workmate_changes())
+                if wb["synced"] > 0:
+                    logger.info(f"Paperless write-back user={user.id}: {wb['synced']} docs synced")
+
             except Exception as e:
                 logger.error(f"Paperless sync failed for user {user.id}: {e}")
     finally:
