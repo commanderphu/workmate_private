@@ -43,6 +43,10 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
       REFRESH_TOKEN_EXPIRE_DAYS: 7
       CLAUDE_API_KEY: ${CLAUDE_API_KEY}
+      LLM_PROVIDER: ${LLM_PROVIDER:-claude}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
@@ -72,6 +76,10 @@ services:
       DATABASE_URL: postgresql+psycopg2://workmate_private:${POSTGRES_PASSWORD}@postgres:5432/workmate_private
       SECRET_KEY: ${SECRET_KEY}
       CLAUDE_API_KEY: ${CLAUDE_API_KEY}
+      LLM_PROVIDER: ${LLM_PROVIDER:-claude}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       FIREBASE_CREDENTIALS_PATH: /app/firebase-credentials.json

@@ -28,6 +28,11 @@ class Settings(BaseSettings):
 
     # AI
     CLAUDE_API_KEY: Optional[str] = None
+    # "claude" (Anthropic API) or "openai" (any OpenAI-compatible chat API: Groq, Gemini, OpenRouter, Ollama)
+    LLM_PROVIDER: str = "claude"
+    LLM_BASE_URL: Optional[str] = None  # e.g. https://api.groq.com/openai/v1
+    LLM_API_KEY: Optional[str] = None  # optional for local Ollama
+    LLM_MODEL: Optional[str] = None
 
     # CORS
     ALLOWED_ORIGINS: list[str] = [

@@ -12,6 +12,7 @@ argon2-cffi==25.1.0
 python-multipart==0.0.20
 psycopg2-binary==2.9.10
 anthropic==0.47.0
+httpx==0.28.1
 pytesseract==0.3.13
 pillow==11.1.0
 pdf2image==1.17.0

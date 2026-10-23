@@ -3,6 +3,7 @@ AI Service for document analysis with Claude
 """
 
 from anthropic import Anthropic
+import httpx
 from typing import Optional
 import json
 import base64
@@ -15,26 +16,60 @@ logger = logging.getLogger(__name__)
 
 
 class ClaudeService:
-    """Service for analyzing documents using Claude AI"""
+    """
+    Service for analyzing documents with an LLM.
+    LLM_PROVIDER=claude uses the Anthropic API, LLM_PROVIDER=openai any OpenAI-compatible chat API.
+    """
 
     def __init__(self):
-        if not settings.CLAUDE_API_KEY:
-            raise ValueError("CLAUDE_API_KEY is not set in environment")
-        self.client = Anthropic(api_key=settings.CLAUDE_API_KEY)
-        self.model = "claude-sonnet-4-6"
+        self.provider = (settings.LLM_PROVIDER or "claude").lower()
+        if self.provider == "claude":
+            if not settings.CLAUDE_API_KEY:
+                raise ValueError("CLAUDE_API_KEY is not set in environment")
+            self.client = Anthropic(api_key=settings.CLAUDE_API_KEY)
+            self.model = "claude-sonnet-4-6"
+        elif self.provider == "openai":
+            if not settings.LLM_BASE_URL or not settings.LLM_MODEL:
+                raise ValueError("LLM_BASE_URL and LLM_MODEL must be set for LLM_PROVIDER=openai")
+            self.client = None
+            self.model = settings.LLM_MODEL
+        else:
+            raise ValueError(f"Unknown LLM_PROVIDER: {settings.LLM_PROVIDER}")
+
+    def _complete(self, prompt: str, max_tokens: int) -> str:
+        """Send a single text prompt and return the model's text answer"""
+        if self.provider == "claude":
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.content[0].text
+
+        headers = {"Authorization": f"Bearer {settings.LLM_API_KEY}"} if settings.LLM_API_KEY else {}
+        response = httpx.post(
+            f"{settings.LLM_BASE_URL.rstrip('/')}/chat/completions",
+            headers=headers,
+            json={
+                "model": self.model,
+                "max_tokens": max_tokens,
+                "temperature": 0.2,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=120,
+        )
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"]
 
     def analyze_document(self, text: str, document_type: Optional[str] = None) -> dict:
         """Analyze OCR-extracted document text and return structured metadata."""
         prompt = self._build_analysis_prompt(text, document_type)
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=2048,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return self._parse_ai_response(response.content[0].text, document_type)
+        return self._parse_ai_response(self._complete(prompt, max_tokens=2048), document_type)
 
     def analyze_document_image(self, image_path: Path, document_type: Optional[str] = None) -> dict:
         """Analyze a document image using Claude Vision API."""
+        if self.provider != "claude":
+            raise NotImplementedError("Image analysis is only implemented for LLM_PROVIDER=claude")
         with open(image_path, "rb") as f:
             image_data = base64.standard_b64encode(f.read()).decode("utf-8")
 
@@ -198,12 +233,7 @@ Antworte NUR mit einem gültigen JSON-Objekt:
 
 Regeln: Nur JSON. Deutsche Dokumente sind üblich. Tags sollen kurz und nützlich sein (z.B. "Telekom", "Rechnung", "2026", "Offen"). task_title soll konkret und handlungsorientiert sein — kein generisches "Dokument prüfen".
 """
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=1024,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return self._parse_ai_response(response.content[0].text)
+        return self._parse_ai_response(self._complete(prompt, max_tokens=1024))
 
     def _build_analysis_prompt(self, text: str, document_type: Optional[str]) -> str:
         type_hint = f"\nHINT: This is likely a {document_type} document." if document_type else ""
