@@ -82,6 +82,10 @@ services:
       LLM_MODEL: ${LLM_MODEL:-}
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
+      # calendar_sync refreshes Google OAuth tokens in the worker and needs the client credentials
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
       FIREBASE_CREDENTIALS_PATH: /app/firebase-credentials.json
       PAPERLESS_URL: ${PAPERLESS_URL:-}
       PAPERLESS_TOKEN: ${PAPERLESS_TOKEN:-}
