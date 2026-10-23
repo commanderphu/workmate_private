@@ -1,6 +1,6 @@
 name: workmate_private
 description: Intelligent document and task management for ADHD
-version: 0.1.0+1
+version: 0.1.1+2
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
