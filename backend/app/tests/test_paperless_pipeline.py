@@ -2,9 +2,11 @@
 Tests for the Paperless import -> AI analysis pipeline and the periodic calendar sync
 """
 
+from datetime import datetime, timedelta
+
 import pytest
 
-from app.models import Document, Task, User
+from app.models import Document, Reminder, Task, User
 from app.services import paperless_service
 from app.tasks import calendar_sync as calendar_sync_module
 from app.tasks import paperless_analyze
@@ -144,3 +146,38 @@ class TestCalendarSyncTask:
         # Used to crash with AttributeError: Integration has no attribute 'is_active'
         monkeypatch.setattr(calendar_sync_module, "SessionLocal", TestingSessionLocal)
         assert calendar_sync_module.calendar_sync() == {"synced": 0}
+
+
+class TestOverdueReminderTime:
+    """Overdue reminders go out the next morning at 08:00 local time, not right away"""
+
+    @pytest.mark.parametrize(
+        "now_utc, timezone, expected_utc",
+        [
+            # 19:30 CEST -> next day 08:00 CEST
+            (datetime(2026, 10, 23, 17, 30), "UTC", datetime(2026, 10, 24, 6, 0)),
+            # 06:00 CEST -> 08:00 the same day
+            (datetime(2026, 10, 24, 4, 0), None, datetime(2026, 10, 24, 6, 0)),
+            # exactly 08:00 -> the next day
+            (datetime(2026, 10, 24, 6, 0), None, datetime(2026, 10, 25, 7, 0)),
+            # DST ends on 25.10. -> 08:00 CET is 07:00 UTC
+            (datetime(2026, 10, 24, 20, 0), "Europe/Berlin", datetime(2026, 10, 25, 7, 0)),
+            # winter time
+            (datetime(2026, 11, 10, 20, 0), "Europe/Berlin", datetime(2026, 11, 11, 7, 0)),
+            # explicit other timezone is respected
+            (datetime(2026, 10, 23, 17, 30), "America/New_York", datetime(2026, 10, 24, 12, 0)),
+            # unknown timezone falls back to Europe/Berlin
+            (datetime(2026, 10, 23, 17, 30), "Mars/Olympus", datetime(2026, 10, 24, 6, 0)),
+        ],
+    )
+    def test_next_morning(self, now_utc, timezone, expected_utc):
+        assert paperless_analyze._next_morning_utc(now_utc, timezone) == expected_utc
+
+    def test_overdue_document_reminder_is_next_morning(self, db, pending_doc, analyze_env, monkeypatch):
+        overdue = {**AI_RESULT, "due_date": "2026-01-15"}
+        monkeypatch.setattr(paperless_analyze.ClaudeService, "analyze_for_paperless", lambda self, text: overdue)
+
+        paperless_analyze.analyze_paperless_document(str(pending_doc.id), notify=False)
+
+        reminder = db.query(Reminder).one()
+        assert reminder.trigger_at == paperless_analyze._next_morning_utc(datetime.utcnow(), "UTC")

@@ -4,9 +4,10 @@ AI analysis task for Paperless-ngx documents
 
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 from uuid import UUID
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -20,6 +21,24 @@ from ..services.claude_service import ClaudeService
 from ..services.paperless_service import get_paperless_client
 
 logger = logging.getLogger(__name__)
+
+# Overdue reminders go out the next morning instead of right away (e.g. in the middle of the night)
+REMINDER_MORNING_HOUR = 8
+DEFAULT_TIMEZONE = "Europe/Berlin"
+
+
+def _next_morning_utc(now_utc: datetime, timezone: str | None) -> datetime:
+    """Next REMINDER_MORNING_HOUR:00 in the user's timezone after now, as naive UTC"""
+    try:
+        tz = ZoneInfo(timezone) if timezone and timezone != "UTC" else ZoneInfo(DEFAULT_TIMEZONE)
+    except ZoneInfoNotFoundError:
+        tz = ZoneInfo(DEFAULT_TIMEZONE)
+
+    local_now = now_utc.replace(tzinfo=ZoneInfo("UTC")).astimezone(tz)
+    morning = datetime.combine(local_now.date(), time(REMINDER_MORNING_HOUR), tzinfo=tz)
+    if morning <= local_now:
+        morning = datetime.combine(local_now.date() + timedelta(days=1), time(REMINDER_MORNING_HOUR), tzinfo=tz)
+    return morning.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
 
 
 @celery_app.task(name="app.tasks.analyze_paperless_document", bind=True, max_retries=2)
@@ -191,10 +210,13 @@ def _create_action_items(db, doc: DocumentModel, result: dict, due_date_str: str
         )
         db.add(event)
 
-        # Reminder one day before (or 2 hours from now if due date is today/past)
+        # Reminder one day before (or the next morning if that is already past)
         remind_at = due_dt - timedelta(days=1)
-        if remind_at < datetime.utcnow():
-            remind_at = datetime.utcnow() + timedelta(hours=2)
+        now = datetime.utcnow()
+        if remind_at < now:
+            from ..models.user import User
+            user = db.query(User).filter(User.id == doc.user_id).first()
+            remind_at = _next_morning_utc(now, user.timezone if user else None)
 
         reminder = Reminder(
             id=uuid.uuid4(),
