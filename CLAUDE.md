@@ -23,6 +23,7 @@ Persönliches ADHD-Taskmanagement + Paperless-Integration. Hetzner cax11 (ARM64,
 
 ## Lokales Dev-Tooling
 
+- **Steuerung über `Makefile`** im Repo-Root (`make help`): Container (`up`, `recreate`, `restart-workers`, `logs`), DB (`backup`, `migrate` = Backup + `alembic upgrade head`, `db-current`), Tooling (`venv`, `lint`, `test`, `pre-commit`)
 - venv im Repo-Root (`venv/`, Python 3.13 wie im Docker-Image, angelegt mit `uv`; System-Python ist 3.14 und hat keine Wheels für die gepinnten Pakete): `~/.local/share/uv-bootstrap/bin/uv pip install -r backend/requirements.txt -r backend/requirements-dev.txt` (mit `VIRTUAL_ENV=$PWD/venv`)
 - pre-commit (`.pre-commit-config.yaml`): flake8 mit denselben harten Regeln wie die Backend-CI (`E9,F63,F7,F82`) + Basis-Checks; black bewusst noch nicht (würde 50 Dateien umformatieren)
 - Dev-Backend läuft mit `--reload --reload-dir app` — Code-Änderungen ohne Container-Neustart; Celery-Worker/Beat brauchen weiterhin `docker restart`
