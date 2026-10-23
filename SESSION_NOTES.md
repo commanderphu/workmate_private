@@ -12,9 +12,11 @@
   - `POST /api/v1/auth/login` → 401 (Passwort aus `~/.credentials/.workmate_private_password` funktioniert nicht für den Account `joshua`)
 
 ### Noch offen
-- [ ] `decode_token` in `app/api/v1/auth.py` fixen (fehlender Import oder Funktion wurde umbenannt/entfernt) – Zeile 154, `refresh_access_token`
-- [ ] Danach Deploy + Retest `/auth/refresh`
-- [ ] Korrektes Passwort für `joshua`-Account klären (aktuell nicht bekannt, ggf. Vaultwarden oder Reset)
+- [x] `decode_token` in `app/api/v1/auth.py` fixen – erledigt `6efb998`
+- [x] Danach Deploy + Retest `/auth/refresh` – auf Prod mit echtem Token verifiziert
+- [x] Passwort für `joshua` geklärt (Datei gilt auf Prod)
+
+→ Weiterer Verlauf und alle Fixes des Tages: `docs/development/daily-note-2026-10-23.md`, offene Punkte als Issues #3–#9
 
 ### Ursache (Analyse 2026-10-23)
 - `decode_token` ist in `app/core/security.py:48` definiert, wird in `app/api/v1/auth.py` aber nicht importiert (Zeile 14).
