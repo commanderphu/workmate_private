@@ -60,7 +60,7 @@ gh issue list --repo commanderphu/workmate_private
 
 ## Reminder Engine & Push
 
-- Reminder-Schedule ist prioritätsabhängig (`backend/app/services/reminder_service.py`, `REMINDER_SCHEDULE`): critical 0/1/3 Tage, medium 0/2/7 Tage, low 0/3 Tage vor Fälligkeit; Verträge (`CONTRACT_REMINDER_SCHEDULE`) 30/14/7/1 Tag vor Kündigungsfrist
+- Reminder-Schedule ist prioritätsabhängig (`backend/app/services/reminder_service.py`, `REMINDER_SCHEDULE`): critical 0/1/3, high 0/2/7, medium 0/3, low 0 Tage vor Fälligkeit (abgesichert durch `backend/app/tests/test_reminder_schedule.py`); Verträge (`CONTRACT_REMINDER_SCHEDULE`) 30/14/7/1 Tag vor Kündigungsfrist
 - Push via Firebase Cloud Messaging (`push_notification_service.py`), FCM-Token via `POST/DELETE /api/v1/notifications/fcm-token`
 - `FIREBASE_CREDENTIALS_PATH` muss auf eine existierende Datei zeigen, sonst startet der Container nicht (in `docker-compose.prod.yml` fest gemountet als `./firebase-credentials.json`) — ohne echtes Firebase-Projekt reicht eine leere `{}`-Datei, Push bleibt dann nur deaktiviert (Log-Warnung, kein Crash)
 

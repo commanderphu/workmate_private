@@ -93,7 +93,7 @@ class TaskEventMappingService:
         # Create calendar event
         new_event = CalendarEvent(
             user_id=task.user_id,
-            task_id=str(task.id),
+            task_id=task.id,
             title=title,
             description=description,
             start_time=start_time,

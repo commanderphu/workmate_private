@@ -74,3 +74,20 @@ def tokens(client, registered_user):
     )
     assert response.status_code == 200, response.text
     return response.json()
+
+
+@pytest.fixture()
+def auth_headers(tokens):
+    return {"Authorization": f"Bearer {tokens['access_token']}"}
+
+
+@pytest.fixture()
+def other_auth_headers(client):
+    """Auth headers for a second, independent user"""
+    other = {"username": "otheruser", "email": "other@example.com", "password": "other-test-pw-123"}
+    assert client.post("/api/v1/auth/register", json=other).status_code == 201
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"username": other["username"], "password": other["password"]},
+    )
+    return {"Authorization": f"Bearer {response.json()['access_token']}"}
