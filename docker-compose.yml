@@ -39,7 +39,7 @@ services:
   workmate_private_celery_beat:
     build: ./backend
     container_name: workmate_private_celery_beat
-    command: celery -A app.celery beat --loglevel=info
+    command: celery -A app.celery beat --loglevel=info --schedule /tmp/celerybeat-schedule
     volumes:
       - ./backend:/app
     depends_on:
