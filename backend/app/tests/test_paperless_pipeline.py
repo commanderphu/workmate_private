@@ -94,6 +94,8 @@ def pending_doc(db, user):
 def analyze_env(monkeypatch):
     """Run the analysis task against the test DB with Claude and push mocked"""
     monkeypatch.setattr(paperless_analyze, "SessionLocal", TestingSessionLocal)
+    # The real constructor requires CLAUDE_API_KEY (not set in CI); analyze_for_paperless is mocked per test
+    monkeypatch.setattr(paperless_analyze.ClaudeService, "__init__", lambda self: None)
     pushes = []
 
     from app.services import push_notification_service
