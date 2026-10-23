@@ -9,7 +9,7 @@ services:
   workmate_private_backend:
     build: ./backend
     container_name: workmate_private_backend
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir app
     volumes:
       - ./backend:/app
       - ./data:/app/data
