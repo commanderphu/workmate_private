@@ -1,3 +1,43 @@
+## Session 2026-10-23 – Offener Punkt: Refresh-Token kaputt (Prod)
+
+### Gefunden
+- Via `docker logs workmate_private_backend` auf Prod (178.104.207.155) beim Test eines Neu-Logins nach App-Reinstall (v0.1.1+2):
+  - `POST /api/v1/auth/refresh` → **500 Internal Server Error**
+    ```
+    File "/app/app/api/v1/auth.py", line 154, in refresh_access_token
+        payload = decode_token(token)
+    NameError: name 'decode_token' is not defined
+    ```
+  - Betrifft den Refresh-Endpoint, also das "Angemeldet bleiben"/Silent-Refresh-Feature.
+  - `POST /api/v1/auth/login` → 401 (Passwort aus `~/.credentials/.workmate_private_password` funktioniert nicht für den Account `joshua`)
+
+### Noch offen
+- [ ] `decode_token` in `app/api/v1/auth.py` fixen (fehlender Import oder Funktion wurde umbenannt/entfernt) – Zeile 154, `refresh_access_token`
+- [ ] Danach Deploy + Retest `/auth/refresh`
+- [ ] Korrektes Passwort für `joshua`-Account klären (aktuell nicht bekannt, ggf. Vaultwarden oder Reset)
+
+### Ursache (Analyse 2026-10-23)
+- `decode_token` ist in `app/core/security.py:48` definiert, wird in `app/api/v1/auth.py` aber nicht importiert (Zeile 14).
+- Eingeführt mit `b1a4239` (2026-07-23) → Silent Refresh hat auf Prod nie funktioniert.
+- Derselbe Fehler macht **Backend CI** rot (flake8 `F821 undefined name 'decode_token'`).
+
+### Gesamtstand 2026-10-23
+| Bereich | Stand |
+|---|---|
+| Prod `/health` | ✅ healthy (DB + Redis) |
+| `/auth/refresh` | ❌ 500 (siehe oben) |
+| Backend CI | ❌ F821 |
+| Build & Deploy | ⚠️ Images + Deploy ok, nur `build-apk` rot (Keystore fehlt in CI, bekannt) |
+| Frontend CI / Docker Build Test | ✅ |
+| Offene Issues | #1 Paperless bidirektional, #2 Push bei E-Mail-Import |
+
+### Weitere Funde
+- [ ] `backend/celerybeat-schedule` steht in `.gitignore`, ist aber noch getrackt → `git rm --cached backend/celerybeat-schedule`
+- [ ] GitHub Actions: Node-20-Deprecation (checkout/setup-java/docker-Actions), `ubuntu-latest` → Ubuntu 26
+- [ ] `backend/app/tests/` ist leer — ein Auth-Smoke-Test hätte den Refresh-Bug gefangen
+
+---
+
 # Session Notes
 
 ---

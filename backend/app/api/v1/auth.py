@@ -11,7 +11,7 @@ import uuid
 from ...db.session import get_db
 from ...schemas import UserCreate, UserResponse, UserSettingsUpdate, UserLogin, Token
 from ...models import User
-from ...core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
+from ...core.security import verify_password, get_password_hash, create_access_token, create_refresh_token, decode_token
 from ..dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
