@@ -31,7 +31,7 @@ def calendar_sync():
             db.query(Integration)
             .filter(
                 Integration.integration_type == IntegrationType.GOOGLE_CALENDAR,
-                Integration.is_active == True,
+                Integration.enabled == True,
             )
             .all()
         )

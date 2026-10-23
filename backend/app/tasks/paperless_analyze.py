@@ -23,12 +23,13 @@ logger = logging.getLogger(__name__)
 
 
 @celery_app.task(name="app.tasks.analyze_paperless_document", bind=True, max_retries=2)
-def analyze_paperless_document(self, document_id: str):
+def analyze_paperless_document(self, document_id: str, notify: bool = True):
     """
     Run Claude AI analysis on a Paperless-ngx document:
     - Generates a German summary
     - Suggests tags
     - Writes results back to Paperless
+    - Sends a push notification (skip with notify=False, e.g. for re-analysis runs)
     """
     db = SessionLocal()
     try:
@@ -84,6 +85,9 @@ def analyze_paperless_document(self, document_id: str):
             asyncio.run(_write_to_paperless(int(paperless_id), result))
 
         # Push notification
+        if not notify:
+            logger.info(f"Paperless AI analysis done for document {document_id} (no push)")
+            return
         try:
             from ..models.user import User
             from ..services.push_notification_service import PushNotificationService
@@ -115,6 +119,10 @@ def analyze_paperless_document(self, document_id: str):
             doc = db.query(DocumentModel).filter(DocumentModel.id == UUID(document_id)).first()
             if doc:
                 doc.processing_status = "failed"
+                meta = dict(doc.doc_metadata or {})
+                meta["ai_error"] = f"{type(exc).__name__}: {exc}"[:500]
+                doc.doc_metadata = meta
+                flag_modified(doc, "doc_metadata")
                 db.commit()
         except Exception:
             pass

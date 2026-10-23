@@ -223,7 +223,9 @@ class PaperlessSyncService:
                     },
                 )
                 self.db.add(db_doc)
-                self.db.flush()
+                # Commit before dispatching: the worker reads the document in its own
+                # session and silently skipped it while it was still uncommitted
+                self.db.commit()
 
                 analyze_paperless_document.delay(str(db_doc.id))
                 imported += 1
