@@ -6,6 +6,7 @@ import logging
 from datetime import datetime, timedelta
 
 from ..celery import celery_app
+from ..core.config import settings
 from ..db.session import SessionLocal
 from ..models.user import User
 from ..services.paperless_service import PaperlessSyncService, get_paperless_client
@@ -20,6 +21,10 @@ def paperless_sync():
     Runs every 30 minutes via celery beat.
     Skips gracefully if Paperless is not configured.
     """
+    if not settings.PAPERLESS_SYNC_ENABLED:
+        logger.info("PAPERLESS_SYNC_ENABLED=false, skipping sync")
+        return
+
     client = get_paperless_client()
     if not client:
         logger.debug("Paperless not configured, skipping sync")

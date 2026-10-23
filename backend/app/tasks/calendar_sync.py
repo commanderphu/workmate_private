@@ -6,6 +6,7 @@ import asyncio
 import logging
 
 from ..celery import celery_app
+from ..core.config import settings
 from ..db.session import SessionLocal
 from ..models.integration import Integration, IntegrationType
 from ..models.user import User
@@ -20,6 +21,10 @@ def calendar_sync():
     Sync all active Google Calendar integrations.
     Runs every 15 minutes via celery beat.
     """
+    if not settings.CALENDAR_SYNC_ENABLED:
+        logger.info("CALENDAR_SYNC_ENABLED=false, skipping sync")
+        return {"synced": 0, "skipped": "disabled"}
+
     db = SessionLocal()
     try:
         integrations = (

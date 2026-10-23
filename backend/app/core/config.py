@@ -66,6 +66,11 @@ class Settings(BaseSettings):
     PAPERLESS_URL: Optional[str] = None
     PAPERLESS_TOKEN: Optional[str] = None
 
+    # Periodische Syncs (Celery Beat) — in Dev auf false, damit Dev und Prod
+    # nicht beide dasselbe Paperless bzw. denselben Google-Kalender bearbeiten
+    PAPERLESS_SYNC_ENABLED: bool = True
+    CALENDAR_SYNC_ENABLED: bool = True
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

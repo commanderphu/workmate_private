@@ -74,4 +74,5 @@ gh issue list --repo commanderphu/workmate_private
 - `added__date__gte` statt `created__date__gte` für Paperless-Sync
 - GitHub Actions APK-Build schlägt fehl (Keystore fehlt in CI) — lokal bauen
 - Root-`docker-compose.yml` ist Joshuas persönliches Dev-Setup (kein Postgres-Service, keine Port-Mappings, setzt externes Docker-Netzwerk `core_network` + zentralen Postgres-Host voraus) — für eigenständiges Self-Hosting `docker-compose.prod.yml` verwenden
+- Dev-Instanz (Root-Compose auf cisco) hängt am selben Paperless + Google-Kalender wie Prod → dort `PAPERLESS_SYNC_ENABLED=false` und `CALENDAR_SYNC_ENABLED=false` in `.env` (Default `true`); `.env`-Änderungen brauchen `docker compose up -d --force-recreate`, kein bloßes Restart
 - `files.py`-Router hängt nicht unter `/api/v1`, sondern direkt unter `/files` (siehe `main.py`)
