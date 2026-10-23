@@ -2,7 +2,7 @@
 Tests for the Paperless import -> AI analysis pipeline and the periodic calendar sync
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 
@@ -145,6 +145,8 @@ class TestCalendarSyncTask:
     def test_runs_without_integrations(self, db, monkeypatch):
         # Used to crash with AttributeError: Integration has no attribute 'is_active'
         monkeypatch.setattr(calendar_sync_module, "SessionLocal", TestingSessionLocal)
+        # independent of a local .env (the dev instance has CALENDAR_SYNC_ENABLED=false)
+        monkeypatch.setattr(calendar_sync_module.settings, "CALENDAR_SYNC_ENABLED", True)
         assert calendar_sync_module.calendar_sync() == {"synced": 0}
 
 
