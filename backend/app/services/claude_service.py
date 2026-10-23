@@ -192,10 +192,11 @@ Antworte NUR mit einem gültigen JSON-Objekt:
   "amount": Zahl oder null,
   "currency": "EUR",
   "due_date": "YYYY-MM-DD oder null",
-  "action_required": true|false
+  "action_required": true|false,
+  "task_title": "Konkreter Aufgabentitel wenn action_required=true, sonst null. Beispiele: 'HU-Termin buchen: Peugeot Partner (fällig Juli 2026)', 'Dienstwagenvereinbarung unterschreiben: Matenaar', 'Rechnung bezahlen: Telekom 49,99 €', 'Mahnung begleichen: EVM bis 15.07.'"
 }}
 
-Regeln: Nur JSON. Deutsche Dokumente sind üblich. Tags sollen kurz und nützlich sein (z.B. "Telekom", "Rechnung", "2026", "Offen").
+Regeln: Nur JSON. Deutsche Dokumente sind üblich. Tags sollen kurz und nützlich sein (z.B. "Telekom", "Rechnung", "2026", "Offen"). task_title soll konkret und handlungsorientiert sein — kein generisches "Dokument prüfen".
 """
         response = self.client.messages.create(
             model=self.model,

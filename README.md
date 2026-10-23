@@ -48,7 +48,7 @@ Workmate Private ist die Antwort darauf: Ein Tool, das nicht versucht, dich zu �
 - Vision-API für Scans (Bilder), Tesseract OCR für PDFs
 
 ### ⏰ Proaktive Erinnerungen
-- Prioritätsbasierte Reminder-Ketten (push + email)
+- Prioritätsbasierte Reminder-Ketten (aktuell nur Push via Firebase; E-Mail als Kanal vorgesehen, aber noch nicht verschickt)
 - **Standard:** 0 / 2 / 7 Tage vor Fälligkeit
 - **Verträge:** 30 / 14 / 7 / 1 Tag vor Kündigungsfrist
 - Eskalation bei überfälligen Zahlungen
@@ -103,10 +103,12 @@ Workmate Private ist die Antwort darauf: Ein Tool, das nicht versucht, dich zu �
 
 ## 🚀 Quick Start (Self-Hosted)
 
+> ⚠️ **Hinweis:** Das `docker-compose.yml` im Root ist Joshuas persönliches Dev-Setup — es hat **keinen eigenen Postgres-Service** und **keine Port-Mappings**, sondern setzt ein extern existierendes Docker-Netzwerk (`core_network`) sowie einen zentralen Postgres-Host (`central_postgres`) voraus. Wer das Projekt eigenständig self-hosten will, nutzt stattdessen **`docker-compose.prod.yml`** (siehe unten) — das bringt Postgres, Redis und Nginx mit eigenem Netzwerk mit.
+
 ### Voraussetzungen
 - Docker + Docker Compose
 - Anthropic API Key (Claude)
-- Firebase-Projekt (für Push-Benachrichtigungen, optional)
+- Firebase-Projekt (für Push-Benachrichtigungen, optional — siehe Hinweis unten)
 - Google Cloud OAuth-Credentials (für Kalender-Sync, optional)
 
 ### 1. Repository klonen
@@ -119,14 +121,14 @@ cd workmate_private
 ### 2. Umgebungsvariablen konfigurieren
 
 ```bash
-cp backend/.env.example backend/.env
+cp .env.example .env
 ```
 
-Mindestens erforderlich in `backend/.env`:
+Mindestens erforderlich in `.env` (siehe `.env.example` für alle Variablen):
 
 ```env
-SECRET_KEY=dein-geheimes-schluessel
-DATABASE_URL=postgresql+psycopg2://workmate_private:workmate_private@postgres:5432/workmate_private
+POSTGRES_PASSWORD=dein-db-passwort
+SECRET_KEY=dein-geheimes-schluessel-min-32-zeichen
 CLAUDE_API_KEY=sk-ant-...
 
 # Optional: Paperless-ngx
@@ -142,18 +144,30 @@ GOOGLE_REDIRECT_URI=https://deine-domain.xyz/api/v1/calendar/oauth/google/callba
 ### 3. Starten
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-API läuft auf `http://localhost:8000`, UI auf `http://localhost:3000`.
+Das startet Postgres, Redis, Backend, Celery, Celery-Beat, Frontend und Nginx (Reverse Proxy mit TLS) als eigenständigen Stack. Backend/Frontend sind eigene Images (`ghcr.io/commanderphu/workmate_private/*:latest`) — wer forkt, muss sie selbst bauen und pushen oder `image:` durch `build:` ersetzen.
+
+Nach dem Start Migrationen ausführen:
+
+```bash
+docker compose -f docker-compose.prod.yml exec backend alembic upgrade head
+```
+
+Die App ist danach über die in `nginx/conf.d` konfigurierte Domain erreichbar (Nginx terminiert TLS und routet auf Backend/Frontend intern — es gibt keine direkten `localhost:8000`/`:3000`-Ports).
+
+> **Push-Benachrichtigungen:** `docker-compose.prod.yml` mountet `./firebase-credentials.json` fest in Backend und Celery. Ohne Firebase-Projekt reicht eine leere JSON-Datei (`echo '{}' > firebase-credentials.json`) an dieser Stelle, sonst startet der Container nicht — Push-Notifications bleiben dann einfach deaktiviert (Log-Warnung statt Fehler).
 
 ### 4. Ersten User anlegen
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/auth/register \
+curl -X POST https://deine-domain.xyz/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","email":"du@example.com","password":"sicheres-passwort"}'
 ```
+
+> Zum lokalen Testen ohne Nginx/TLS kann das Backend auch direkt mit `docker compose -f docker-compose.prod.yml up -d postgres redis backend celery celery-beat` gestartet und per `docker compose -f docker-compose.prod.yml exec backend curl localhost:8000/health` innerhalb des Containers geprüft werden — von außen ist Port 8000 in diesem Setup nicht exponiert.
 
 ### Flutter App bauen
 
