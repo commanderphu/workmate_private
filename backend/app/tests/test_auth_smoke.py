@@ -2,6 +2,7 @@
 Smoke tests for the auth flow: register, login, /me, refresh, API key
 """
 
+from app.core.security import get_password_hash
 from app.models import User
 
 from .conftest import TEST_USER
@@ -27,6 +28,48 @@ class TestLogin:
     def test_register_duplicate_username_is_rejected(self, client, registered_user):
         response = client.post("/api/v1/auth/register", json=TEST_USER)
         assert response.status_code == 400
+
+    def test_register_username_differing_only_in_case_is_rejected(self, client, registered_user):
+        response = client.post(
+            "/api/v1/auth/register",
+            json={**TEST_USER, "username": TEST_USER["username"].upper(), "email": "anders@example.com"},
+        )
+        assert response.status_code == 400
+
+
+class TestLoginIdentifier:
+    """Mobile keyboards capitalize the first letter, users type their email — both must work"""
+
+    def login(self, client, identifier, password=TEST_USER["password"]):
+        return client.post("/api/v1/auth/login", json={"username": identifier, "password": password})
+
+    def test_username_is_case_insensitive(self, client, registered_user):
+        assert self.login(client, "Smoketest").status_code == 200
+        assert self.login(client, "SMOKETEST").status_code == 200
+
+    def test_surrounding_whitespace_is_ignored(self, client, registered_user):
+        assert self.login(client, "  smoketest ").status_code == 200
+
+    def test_login_with_email(self, client, registered_user):
+        assert self.login(client, TEST_USER["email"]).status_code == 200
+
+    def test_login_with_email_is_case_insensitive(self, client, registered_user):
+        assert self.login(client, "SmokeTest@Example.com").status_code == 200
+
+    def test_email_with_wrong_password_is_rejected(self, client, registered_user):
+        assert self.login(client, TEST_USER["email"], password="falsch-falsch").status_code == 401
+
+    def test_exact_username_wins_over_case_variant(self, client, db, registered_user):
+        # Legacy data: two accounts differing only in case (register prevents this now)
+        db.add(User(username="Smoketest", email="legacy@example.com", password_hash=get_password_hash("legacy-pw-123")))
+        db.commit()
+        assert self.login(client, "Smoketest", password="legacy-pw-123").status_code == 200
+        assert self.login(client, "smoketest").status_code == 200
+
+    def test_ambiguous_case_variant_is_rejected(self, client, db, registered_user):
+        db.add(User(username="Smoketest", email="legacy@example.com", password_hash=get_password_hash("legacy-pw-123")))
+        db.commit()
+        assert self.login(client, "SMOKETEST").status_code == 401
 
 
 class TestMe:

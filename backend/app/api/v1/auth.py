@@ -3,6 +3,7 @@ Authentication endpoints
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from datetime import datetime
 import secrets
@@ -22,8 +23,8 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """
     Register a new user
     """
-    # Check if username already exists
-    existing_user = db.query(User).filter(User.username == user_data.username).first()
+    # Check if username already exists (case-insensitive, login is case-insensitive too)
+    existing_user = db.query(User).filter(func.lower(User.username) == user_data.username.lower()).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -31,7 +32,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         )
 
     # Check if email already exists
-    existing_email = db.query(User).filter(User.email == user_data.email).first()
+    existing_email = db.query(User).filter(func.lower(User.email) == user_data.email.lower()).first()
     if existing_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -55,13 +56,30 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
+def _find_user_for_login(db: Session, identifier: str):
+    """
+    Resolve a login identifier: username or email, case-insensitive.
+    An exact username match wins; ambiguous case-insensitive matches resolve to None.
+    """
+    identifier = identifier.strip()
+    user = db.query(User).filter(User.username == identifier).first()
+    if user:
+        return user
+
+    lowered = identifier.lower()
+    candidates = db.query(User).filter(
+        or_(func.lower(User.username) == lowered, func.lower(User.email) == lowered)
+    ).all()
+    return candidates[0] if len(candidates) == 1 else None
+
+
 @router.post("/login", response_model=Token)
 def login(credentials: UserLogin, db: Session = Depends(get_db)):
     """
     Login and get access token
     """
     # Find user
-    user = db.query(User).filter(User.username == credentials.username).first()
+    user = _find_user_for_login(db, credentials.username)
 
     # Verify user and password
     if not user or not verify_password(credentials.password, user.password_hash):
