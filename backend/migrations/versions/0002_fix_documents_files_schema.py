@@ -65,8 +65,7 @@ def upgrade() -> None:
     op.create_index('ix_documents_processing_status', 'documents', ['processing_status'])
     op.create_index('ix_documents_uploaded_at', 'documents', ['uploaded_at'])
 
-    # Fix tasks.document_id FK (references documents which was recreated)
-    op.drop_constraint('tasks_document_id_fkey', 'tasks', type_='foreignkey')
+    # Restore tasks.document_id FK (dropped above, documents was recreated)
     op.create_foreign_key(
         'tasks_document_id_fkey', 'tasks', 'documents',
         ['document_id'], ['id'], ondelete='SET NULL'
