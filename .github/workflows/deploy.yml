@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
 
+# Nur ein Deploy gleichzeitig: ein neuer Push bricht den laufenden ab,
+# damit nie zwei Läufe parallel auf Prod deployen
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   IMAGE_BACKEND: ghcr.io/commanderphu/workmate_private/backend
@@ -82,6 +88,10 @@ jobs:
 
             # Restart services
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # nginx löst den Backend-Namen nur beim Start auf — nach neu erstellten
+            # Containern sonst 502 auf die alte IP
+            docker compose -f docker-compose.prod.yml restart nginx
 
             # Cleanup old images
             docker image prune -f
