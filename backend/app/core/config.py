@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     LLM_API_KEY: Optional[str] = None  # optional for local Ollama
     LLM_MODEL: Optional[str] = None  # for claude optional, default see claude_service.py
 
+    # Self-hosted setups can stay open, prod sets this to false (docker-compose.prod.yml)
+    REGISTRATION_ENABLED: bool = True
+
     # CORS
     ALLOWED_ORIGINS: list[str] = [
         "http://localhost:3000",

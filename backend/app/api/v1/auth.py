@@ -9,6 +9,7 @@ from datetime import datetime
 import secrets
 import uuid
 
+from ...core.config import settings
 from ...db.session import get_db
 from ...schemas import UserCreate, UserResponse, UserSettingsUpdate, UserLogin, Token
 from ...models import User
@@ -23,6 +24,12 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """
     Register a new user
     """
+    if not settings.REGISTRATION_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Registration is disabled"
+        )
+
     # Check if username already exists (case-insensitive, login is case-insensitive too)
     existing_user = db.query(User).filter(func.lower(User.username) == user_data.username.lower()).first()
     if existing_user:

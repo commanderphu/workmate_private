@@ -2,6 +2,7 @@
 Smoke tests for the auth flow: register, login, /me, refresh, API key
 """
 
+from app.core.config import settings
 from app.core.security import get_password_hash
 from app.models import User
 
@@ -24,6 +25,19 @@ class TestLogin:
             json={"username": TEST_USER["username"], "password": "falsch-falsch"},
         )
         assert response.status_code == 401
+
+    def test_register_can_be_disabled(self, client, monkeypatch):
+        monkeypatch.setattr(settings, "REGISTRATION_ENABLED", False)
+        response = client.post("/api/v1/auth/register", json=TEST_USER)
+        assert response.status_code == 403
+
+    def test_login_works_with_registration_disabled(self, client, registered_user, monkeypatch):
+        monkeypatch.setattr(settings, "REGISTRATION_ENABLED", False)
+        response = client.post(
+            "/api/v1/auth/login",
+            json={"username": TEST_USER["username"], "password": TEST_USER["password"]},
+        )
+        assert response.status_code == 200
 
     def test_register_duplicate_username_is_rejected(self, client, registered_user):
         response = client.post("/api/v1/auth/register", json=TEST_USER)

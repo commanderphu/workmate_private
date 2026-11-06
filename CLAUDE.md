@@ -13,6 +13,7 @@ Persönliches ADHD-Taskmanagement + Paperless-Integration. Hetzner cax11 (ARM64,
 - JWT (30 Min) + Refresh Token (7 Tage), kein Keycloak
 - Permanent API-Key: `X-API-Key` Header (in `.env` als `WORKMATE_API_TOKEN`)
 - Refresh-Endpoint: `POST /api/v1/auth/refresh`
+- Registrierung auf Prod aus (`REGISTRATION_ENABLED`, Default in `docker-compose.prod.yml` false), sonst könnten Fremde über Uploads das LLM-Guthaben verbrauchen
 
 ## Wichtige Pfade
 
@@ -57,7 +58,7 @@ gh issue list --repo commanderphu/workmate_private
 
 - `claude` (Default, Modell `claude-haiku-5-5`, per `LLM_MODEL` änderbar), `openai` (OpenAI-kompatibles API mit Key) oder `chatgpt` (eigener ChatGPT-Plan per OAuth, `backend/app/services/chatgpt_service.py`)
 - `chatgpt` ist eine OpenAI-Preview. Nur Textanalyse, Bilder (`analyze_document_image`) bleiben Claude-only
-- **Noch nicht auf Prod aktivieren:** Die SIWC-Terms verlangen dauerhafte Token-Speicherung lokal und nicht in einer Remote-Umgebung (Abschnitt 1), und Aktivitäten anderer Nutzer dürfen keine Anfragen auf dein Konto auslösen (3.1), `/auth/register` ist aber offen. Hintergrundnutzung ist mit ausdrücklicher Zustimmung erlaubt
+- **Noch nicht auf Prod aktivieren:** Die SIWC-Terms verlangen dauerhafte Token-Speicherung lokal und nicht in einer Remote-Umgebung (Abschnitt 1), und Aktivitäten anderer Nutzer dürfen keine Anfragen auf dein Konto auslösen (3.1). Hintergrundnutzung ist mit ausdrücklicher Zustimmung erlaubt
 - Einrichtung, Anmeldung braucht Browser + `127.0.0.1`-Callback, läuft also lokal:
 
 ```bash
