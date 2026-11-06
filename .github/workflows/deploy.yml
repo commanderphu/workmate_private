@@ -67,6 +67,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # /opt/workmate-private ist kein Git-Repo, die Compose-Datei kommt per scp
+      - name: Compose-Datei übertragen
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: workmate
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: docker-compose.prod.yml
+          target: /opt/workmate-private
+
       - name: Deploy to Hetzner
         uses: appleboy/ssh-action@v1
         with:
@@ -74,10 +84,9 @@ jobs:
           username: workmate
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Ohne set -e meldet der Job Erfolg, auch wenn ein Schritt scheitert
+            set -e
             cd /opt/workmate-private
-
-            # Sync config files from repo
-            git pull origin main
 
             # Pull latest images
             docker compose -f docker-compose.prod.yml pull
