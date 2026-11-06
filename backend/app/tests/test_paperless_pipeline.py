@@ -8,6 +8,7 @@ import pytest
 
 from app.models import Document, Reminder, Task, User
 from app.services import paperless_service
+from app.services.chatgpt_service import ChatGPTPermanentError
 from app.tasks import calendar_sync as calendar_sync_module
 from app.tasks import paperless_analyze
 
@@ -141,6 +142,24 @@ class TestAnalysis:
         doc = db.get(Document, pending_doc.id)
         assert doc.processing_status == "failed"
         assert doc.doc_metadata["ai_error"] == "RuntimeError: Claude API: credit balance too low"
+
+
+    def test_permanent_llm_error_is_not_retried(self, db, pending_doc, analyze_env, monkeypatch):
+        def limit_reached(self, text):
+            raise ChatGPTPermanentError("code=subscription_sharing_usage_limit_exceeded")
+
+        retries = []
+        monkeypatch.setattr(paperless_analyze.ClaudeService, "analyze_for_paperless", limit_reached)
+        monkeypatch.setattr(
+            paperless_analyze.analyze_paperless_document, "retry", lambda **kwargs: retries.append(kwargs)
+        )
+
+        with pytest.raises(ChatGPTPermanentError):
+            paperless_analyze.analyze_paperless_document(str(pending_doc.id))
+
+        assert retries == []
+        db.expire_all()
+        assert db.get(Document, pending_doc.id).processing_status == "failed"
 
 
 class TestCalendarSyncTask:

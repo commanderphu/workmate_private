@@ -10,6 +10,7 @@ from .reminder import Reminder, ReminderSeverity, ReminderStatus
 from .session import Session
 from .calendar_event import CalendarEvent, CalendarSyncStatus
 from .integration import Integration, IntegrationType, SyncDirection
+from .llm_credential import LLMCredential
 
 __all__ = [
     "User",
@@ -27,4 +28,5 @@ __all__ = [
     "Integration",
     "IntegrationType",
     "SyncDirection",
+    "LLMCredential",
 ]

@@ -53,6 +53,27 @@ Werden als GitHub Issues im Repo getrackt, nicht in Doku-Dateien dupliziert:
 gh issue list --repo commanderphu/workmate_private
 ```
 
+## KI-Anbieter (`LLM_PROVIDER`)
+
+- `claude` (Default), `openai` (OpenAI-kompatibles API mit Key) oder `chatgpt` (eigener ChatGPT-Plan per OAuth, `backend/app/services/chatgpt_service.py`)
+- `chatgpt` ist eine OpenAI-Preview. Nur Textanalyse, Bilder (`analyze_document_image`) bleiben Claude-only
+- **Noch nicht auf Prod aktivieren:** Die SIWC-Terms verlangen dauerhafte Token-Speicherung lokal und nicht in einer Remote-Umgebung (Abschnitt 1), und Aktivitäten anderer Nutzer dürfen keine Anfragen auf dein Konto auslösen (3.1), `/auth/register` ist aber offen. Hintergrundnutzung ist mit ausdrücklicher Zustimmung erlaubt
+- Einrichtung, Anmeldung braucht Browser + `127.0.0.1`-Callback, läuft also lokal:
+
+```bash
+# lokal, aus backend/
+../venv/bin/python -m scripts.chatgpt_login login --out ~/.credentials/workmate_chatgpt.json
+# Server: importieren, Modell auswählen, lokale Datei löschen (Refresh-Token rotiert, ab jetzt gehört die Session dem Server)
+ssh workmate@178.104.207.155 'cd /opt/workmate-private && docker compose -f docker-compose.prod.yml exec -T backend python -m scripts.chatgpt_login import' < ~/.credentials/workmate_chatgpt.json
+ssh workmate@178.104.207.155 'cd /opt/workmate-private && docker compose -f docker-compose.prod.yml exec -T backend python -m scripts.chatgpt_login status'
+rm ~/.credentials/workmate_chatgpt.json
+# .env: LLM_PROVIDER=chatgpt, LLM_MODEL=<Modell aus status>, danach up -d --force-recreate backend celery
+```
+
+- Session liegt verschlüsselt in `llm_credentials` (Schlüssel aus `SECRET_KEY`, Änderung = neu anmelden); Refresh läuft unter Zeilensperre
+- Neu anmelden nach Session-Ende (auch nach 30 Tagen ohne Refresh): `login` mit `--client-id` und `--host-id` aus `status`
+- Limit- und Berechtigungsfehler werden nicht wiederholt, das Dokument bleibt `failed` mit `ai_error`
+
 ## Google Calendar
 
 - Integration via OAuth, Kalender: `callmephu95@gmail.com` (primär) + Work & Study, Events, Freunde/Familie, Gesundheit

@@ -145,6 +145,8 @@ def analyze_paperless_document(self, document_id: str, notify: bool = True):
                 db.commit()
         except Exception:
             pass
+        if not getattr(exc, "retryable", True):
+            raise
         raise self.retry(exc=exc, countdown=60)
     finally:
         db.close()

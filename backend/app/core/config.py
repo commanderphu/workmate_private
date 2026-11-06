@@ -28,7 +28,8 @@ class Settings(BaseSettings):
 
     # AI
     CLAUDE_API_KEY: Optional[str] = None
-    # "claude" (Anthropic API) or "openai" (any OpenAI-compatible chat API: Groq, Gemini, OpenRouter, Ollama)
+    # "claude" (Anthropic API), "openai" (any OpenAI-compatible chat API: Groq, Gemini, OpenRouter, Ollama)
+    # or "chatgpt" (ChatGPT plan via OAuth, needs LLM_MODEL and scripts/chatgpt_login.py)
     LLM_PROVIDER: str = "claude"
     LLM_BASE_URL: Optional[str] = None  # e.g. https://api.groq.com/openai/v1
     LLM_API_KEY: Optional[str] = None  # optional for local Ollama

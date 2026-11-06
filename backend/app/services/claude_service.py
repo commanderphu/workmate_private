@@ -11,6 +11,7 @@ from pathlib import Path
 import logging
 
 from ..core.config import settings
+from . import chatgpt_service
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,8 @@ logger = logging.getLogger(__name__)
 class ClaudeService:
     """
     Service for analyzing documents with an LLM.
-    LLM_PROVIDER=claude uses the Anthropic API, LLM_PROVIDER=openai any OpenAI-compatible chat API.
+    LLM_PROVIDER=claude uses the Anthropic API, LLM_PROVIDER=openai any OpenAI-compatible chat API,
+    LLM_PROVIDER=chatgpt the signed-in ChatGPT plan (see chatgpt_service.py).
     """
 
     def __init__(self):
@@ -33,6 +35,11 @@ class ClaudeService:
                 raise ValueError("LLM_BASE_URL and LLM_MODEL must be set for LLM_PROVIDER=openai")
             self.client = None
             self.model = settings.LLM_MODEL
+        elif self.provider == "chatgpt":
+            if not settings.LLM_MODEL:
+                raise ValueError("LLM_MODEL must be set for LLM_PROVIDER=chatgpt")
+            self.client = None
+            self.model = settings.LLM_MODEL
         else:
             raise ValueError(f"Unknown LLM_PROVIDER: {settings.LLM_PROVIDER}")
 
@@ -45,6 +52,9 @@ class ClaudeService:
                 messages=[{"role": "user", "content": prompt}]
             )
             return response.content[0].text
+
+        if self.provider == "chatgpt":
+            return chatgpt_service.complete(prompt, self.model)
 
         headers = {"Authorization": f"Bearer {settings.LLM_API_KEY}"} if settings.LLM_API_KEY else {}
         response = httpx.post(
