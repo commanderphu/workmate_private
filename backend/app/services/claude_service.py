@@ -15,6 +15,8 @@ from . import chatgpt_service
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_CLAUDE_MODEL = "claude-haiku-5-5"
+
 
 class ClaudeService:
     """
@@ -29,7 +31,7 @@ class ClaudeService:
             if not settings.CLAUDE_API_KEY:
                 raise ValueError("CLAUDE_API_KEY is not set in environment")
             self.client = Anthropic(api_key=settings.CLAUDE_API_KEY)
-            self.model = "claude-sonnet-4-6"
+            self.model = settings.LLM_MODEL or DEFAULT_CLAUDE_MODEL
         elif self.provider == "openai":
             if not settings.LLM_BASE_URL or not settings.LLM_MODEL:
                 raise ValueError("LLM_BASE_URL and LLM_MODEL must be set for LLM_PROVIDER=openai")

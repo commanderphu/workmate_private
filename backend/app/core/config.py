@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = "claude"
     LLM_BASE_URL: Optional[str] = None  # e.g. https://api.groq.com/openai/v1
     LLM_API_KEY: Optional[str] = None  # optional for local Ollama
-    LLM_MODEL: Optional[str] = None
+    LLM_MODEL: Optional[str] = None  # for claude optional, default see claude_service.py
 
     # CORS
     ALLOWED_ORIGINS: list[str] = [

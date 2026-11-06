@@ -55,7 +55,7 @@ gh issue list --repo commanderphu/workmate_private
 
 ## KI-Anbieter (`LLM_PROVIDER`)
 
-- `claude` (Default), `openai` (OpenAI-kompatibles API mit Key) oder `chatgpt` (eigener ChatGPT-Plan per OAuth, `backend/app/services/chatgpt_service.py`)
+- `claude` (Default, Modell `claude-haiku-5-5`, per `LLM_MODEL` änderbar), `openai` (OpenAI-kompatibles API mit Key) oder `chatgpt` (eigener ChatGPT-Plan per OAuth, `backend/app/services/chatgpt_service.py`)
 - `chatgpt` ist eine OpenAI-Preview. Nur Textanalyse, Bilder (`analyze_document_image`) bleiben Claude-only
 - **Noch nicht auf Prod aktivieren:** Die SIWC-Terms verlangen dauerhafte Token-Speicherung lokal und nicht in einer Remote-Umgebung (Abschnitt 1), und Aktivitäten anderer Nutzer dürfen keine Anfragen auf dein Konto auslösen (3.1), `/auth/register` ist aber offen. Hintergrundnutzung ist mit ausdrücklicher Zustimmung erlaubt
 - Einrichtung, Anmeldung braucht Browser + `127.0.0.1`-Callback, läuft also lokal:

@@ -79,6 +79,17 @@ class TestProviderSelection:
         with pytest.raises(ValueError, match="CLAUDE_API_KEY"):
             ClaudeService()
 
+    @pytest.mark.parametrize("configured,expected", [
+        (None, claude_service.DEFAULT_CLAUDE_MODEL),
+        ("", claude_service.DEFAULT_CLAUDE_MODEL),  # prod compose passes an empty value
+        ("claude-sonnet-5-5", "claude-sonnet-5-5"),
+    ])
+    def test_claude_model_is_configurable(self, monkeypatch, configured, expected):
+        monkeypatch.setattr(claude_service.settings, "LLM_PROVIDER", "claude")
+        monkeypatch.setattr(claude_service.settings, "CLAUDE_API_KEY", "sk-test")
+        monkeypatch.setattr(claude_service.settings, "LLM_MODEL", configured)
+        assert ClaudeService().model == expected
+
     def test_unknown_provider_is_rejected(self, monkeypatch):
         monkeypatch.setattr(claude_service.settings, "LLM_PROVIDER", "irgendwas")
         with pytest.raises(ValueError, match="Unknown LLM_PROVIDER"):
