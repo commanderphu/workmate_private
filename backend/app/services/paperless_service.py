@@ -46,6 +46,17 @@ class PaperlessClient:
                 resp.raise_for_status()
                 return await resp.json()
 
+    async def _get_all(self, endpoint: str, page_size: int = 100) -> List[Dict]:
+        """Fetch every page of a list endpoint (tags etc. can exceed one page)"""
+        results: List[Dict] = []
+        page = 1
+        while True:
+            data = await self._get(endpoint, params={"page": page, "page_size": page_size})
+            results.extend(data.get("results", []))
+            if not data.get("next"):
+                return results
+            page += 1
+
     async def test_connection(self) -> Dict:
         """Test API connection and return basic stats"""
         result = await self._get("/documents/", params={"page_size": 1})
@@ -66,15 +77,13 @@ class PaperlessClient:
         return await self._get(f"/documents/{document_id}/")
 
     async def get_tags(self) -> List[Dict]:
-        result = await self._get("/tags/", params={"page_size": 100})
-        return result.get("results", [])
+        return await self._get_all("/tags/")
 
     async def create_tag(self, name: str, color: str = "#0066cc") -> Dict:
         return await self._post("/tags/", data={"name": name, "color": color})
 
     async def get_custom_fields(self) -> List[Dict]:
-        result = await self._get("/custom_fields/", params={"page_size": 100})
-        return result.get("results", [])
+        return await self._get_all("/custom_fields/")
 
     async def create_custom_field(self, name: str, data_type: str = "string") -> Dict:
         return await self._post("/custom_fields/", data={"name": name, "data_type": data_type})
@@ -105,8 +114,7 @@ class PaperlessClient:
         return await self._patch(f"/documents/{document_id}/", data=data)
 
     async def get_correspondents(self) -> List[Dict]:
-        result = await self._get("/correspondents/", params={"page_size": 200})
-        return result.get("results", [])
+        return await self._get_all("/correspondents/")
 
     async def create_correspondent(self, name: str) -> Dict:
         return await self._post("/correspondents/", data={"name": name})
@@ -119,8 +127,7 @@ class PaperlessClient:
         return await self.create_correspondent(name)
 
     async def get_document_types(self) -> List[Dict]:
-        result = await self._get("/document_types/", params={"page_size": 100})
-        return result.get("results", [])
+        return await self._get_all("/document_types/")
 
     async def get_or_create_document_type(self, name: str) -> Dict:
         types = await self.get_document_types()

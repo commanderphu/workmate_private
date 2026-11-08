@@ -283,3 +283,26 @@ class TestWriteToPaperless:
     def test_default_title_detection(self, title, expected):
         from app.tasks.paperless_analyze import _is_default_title
         assert _is_default_title(title) is expected
+
+
+def test_get_or_create_tag_finds_tag_on_second_page(monkeypatch):
+    """Paperless hat mehr als 100 Tags: Tag auf Seite 2 darf nicht neu angelegt werden (400 Duplicate)"""
+    import asyncio
+    from app.services.paperless_service import PaperlessClient
+
+    client = PaperlessClient("https://paperless.test", "token")
+    pages = {
+        1: {"results": [{"id": i, "name": f"tag{i}"} for i in range(100)], "next": "page=2"},
+        2: {"results": [{"id": 160, "name": "Steuer 2025"}], "next": None},
+    }
+
+    async def fake_get(endpoint, params=None):
+        return pages[params["page"]]
+
+    async def fail_post(endpoint, data):
+        raise AssertionError("darf keinen Tag anlegen")
+
+    monkeypatch.setattr(client, "_get", fake_get)
+    monkeypatch.setattr(client, "_post", fail_post)
+    tag = asyncio.run(client.get_or_create_tag("steuer 2025"))
+    assert tag["id"] == 160
