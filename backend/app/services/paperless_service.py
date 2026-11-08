@@ -136,6 +136,13 @@ class PaperlessClient:
                 return t
         return await self._post("/document_types/", data={"name": name})
 
+    async def find_tags(self, names: List[str]) -> List[Dict]:
+        """Existing tags matching the given names (case-insensitive), nothing is created"""
+        wanted = {n.strip().lower() for n in names if n and n.strip()}
+        if not wanted:
+            return []
+        return [t for t in await self.get_tags() if t["name"].lower() in wanted]
+
     async def get_or_create_tag(self, name: str) -> Dict:
         tags = await self.get_tags()
         for tag in tags:

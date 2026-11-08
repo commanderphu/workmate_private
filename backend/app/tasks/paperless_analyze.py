@@ -258,7 +258,8 @@ def _is_default_title(title: str | None) -> bool:
 async def _write_to_paperless(paperless_id: int, result: dict):
     """
     Write the AI result back without destroying manual curation:
-    tags are only added, title/correspondent/document type only filled when still empty
+    tags are only added (and only tags that already exist in Paperless),
+    title/correspondent/document type only filled when still empty
     (title: when it is still the scanner file name).
     """
     client = get_paperless_client()
@@ -268,12 +269,11 @@ async def _write_to_paperless(paperless_id: int, result: dict):
     current = await client.get_document(paperless_id)
     existing_tags = list(current.get("tags") or [])
 
+    # Only tags that already exist in Paperless: AI-invented tags flooded the tag list
     tag_ids = list(existing_tags)
-    for tag_name in result.get("tags", []):
-        if tag_name:
-            tag = await client.get_or_create_tag(tag_name)
-            if tag["id"] not in tag_ids:
-                tag_ids.append(tag["id"])
+    for tag in await client.find_tags(result.get("tags", [])):
+        if tag["id"] not in tag_ids:
+            tag_ids.append(tag["id"])
 
     sender = result.get("sender") or ""
     correspondent_id = None

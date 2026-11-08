@@ -225,6 +225,9 @@ class WritebackClient:
     async def get_or_create_tag(self, name):
         return await self._get_or_create("tag", name)
 
+    async def find_tags(self, names):
+        return [{"id": 7, "name": n} for n in names if n == "Lohn"]
+
     async def get_or_create_correspondent(self, name):
         return await self._get_or_create("correspondent", name)
 
@@ -237,7 +240,7 @@ class WritebackClient:
 
 WRITEBACK_RESULT = {
     "type": "Rechnung", "sender": "Matenaar Service GmbH", "summary": "Lohnabrechnung",
-    "tags": ["Lohn"], "amount": "1906.95", "due_date": None,
+    "tags": ["Lohn", "Kuhrau"], "amount": "1906.95", "due_date": None,
 }
 
 
@@ -256,8 +259,8 @@ class TestWriteToPaperless:
             "title": "Matenaar Lohnabrechnung April 2026", "tags": [54, 160],
             "correspondent": 45, "document_type": 5,
         })
-        assert fake.patched["tags"][:2] == [54, 160]
-        assert len(fake.patched["tags"]) == 3
+        assert fake.patched["tags"] == [54, 160, 7]
+        assert not [c for c in fake.created if c[0] == "tag"]
         assert fake.patched["title"] is None
         assert fake.patched["correspondent"] is None
         assert fake.patched["document_type"] is None
@@ -271,7 +274,7 @@ class TestWriteToPaperless:
         assert fake.patched["title"].startswith("Matenaar Service GmbH – Rechnung")
         assert fake.patched["correspondent"] is not None
         assert fake.patched["document_type"] is not None
-        assert len(fake.patched["tags"]) == 1
+        assert fake.patched["tags"] == [7]
 
     @pytest.mark.parametrize("title,expected", [
         ("Scan_08112026163907_20261108163907", True),
