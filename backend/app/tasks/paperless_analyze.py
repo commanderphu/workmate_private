@@ -3,6 +3,7 @@ AI analysis task for Paperless-ngx documents
 """
 
 import logging
+import re
 import uuid
 from datetime import datetime, time, timedelta
 from decimal import Decimal
@@ -246,30 +247,47 @@ _AI_TYPE_TO_PAPERLESS_DOCTYPE = {
 }
 
 
+_DEFAULT_TITLE_RE = re.compile(r"^(Scan|scan|SCAN|IMG|img|Dokument|document|doc)[_\- ]?\d", re.ASCII)
+
+
+def _is_default_title(title: str | None) -> bool:
+    """True if Paperless still shows the file-name title (e.g. 'Scan_08112026163907_...')"""
+    return not title or bool(_DEFAULT_TITLE_RE.match(title.strip()))
+
+
 async def _write_to_paperless(paperless_id: int, result: dict):
+    """
+    Write the AI result back without destroying manual curation:
+    tags are only added, title/correspondent/document type only filled when still empty
+    (title: when it is still the scanner file name).
+    """
     client = get_paperless_client()
     if not client:
         return
 
-    tag_ids = []
+    current = await client.get_document(paperless_id)
+    existing_tags = list(current.get("tags") or [])
+
+    tag_ids = list(existing_tags)
     for tag_name in result.get("tags", []):
         if tag_name:
             tag = await client.get_or_create_tag(tag_name)
-            tag_ids.append(tag["id"])
+            if tag["id"] not in tag_ids:
+                tag_ids.append(tag["id"])
 
-    correspondent_id = None
     sender = result.get("sender") or ""
-    if sender:
+    correspondent_id = None
+    if sender and not current.get("correspondent"):
         try:
             corr = await client.get_or_create_correspondent(sender)
             correspondent_id = corr["id"]
         except Exception as e:
             logger.warning(f"Could not set correspondent '{sender}': {e}")
 
-    doc_type_id = None
     ai_type = result.get("type", "")
+    doc_type_id = None
     paperless_type_name = _AI_TYPE_TO_PAPERLESS_DOCTYPE.get(ai_type)
-    if paperless_type_name:
+    if paperless_type_name and not current.get("document_type"):
         try:
             dt = await client.get_or_create_document_type(paperless_type_name)
             doc_type_id = dt["id"]
@@ -292,20 +310,22 @@ async def _write_to_paperless(paperless_id: int, result: dict):
     if result.get("action_required"):
         note_lines.append("⚠️ Handlungsbedarf")
 
-    title_parts = []
-    if sender:
-        title_parts.append(sender)
-    if ai_type and ai_type != "Sonstiges":
-        title_parts.append(ai_type)
-    if amount:
-        title_parts.append(f"{amount} {result.get('currency', 'EUR')}")
-    if due_date:
-        title_parts.append(due_date)
-    new_title = " – ".join(title_parts) if title_parts else None
+    new_title = None
+    if _is_default_title(current.get("title")):
+        title_parts = []
+        if sender:
+            title_parts.append(sender)
+        if ai_type and ai_type != "Sonstiges":
+            title_parts.append(ai_type)
+        if amount:
+            title_parts.append(f"{amount} {result.get('currency', 'EUR')}")
+        if due_date:
+            title_parts.append(due_date)
+        new_title = " – ".join(title_parts) if title_parts else None
 
     await client.update_document(
         document_id=paperless_id,
-        tags=tag_ids if tag_ids else None,
+        tags=tag_ids if tag_ids != existing_tags else None,
         notes="\n".join(note_lines),
         correspondent=correspondent_id,
         document_type=doc_type_id,

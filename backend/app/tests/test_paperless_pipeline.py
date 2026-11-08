@@ -204,3 +204,82 @@ class TestOverdueReminderTime:
 
         reminder = db.query(Reminder).one()
         assert reminder.trigger_at == paperless_analyze._next_morning_utc(datetime.utcnow(), "UTC")
+
+
+class WritebackClient:
+    """Minimal stand-in for PaperlessClient that records the PATCH"""
+
+    def __init__(self, current):
+        self.current = current
+        self.patched = None
+        self.created = []
+        self._ids = iter(range(900, 999))
+
+    async def get_document(self, document_id):
+        return self.current
+
+    async def _get_or_create(self, kind, name):
+        self.created.append((kind, name))
+        return {"id": next(self._ids), "name": name}
+
+    async def get_or_create_tag(self, name):
+        return await self._get_or_create("tag", name)
+
+    async def get_or_create_correspondent(self, name):
+        return await self._get_or_create("correspondent", name)
+
+    async def get_or_create_document_type(self, name):
+        return await self._get_or_create("document_type", name)
+
+    async def update_document(self, document_id, **kwargs):
+        self.patched = kwargs
+
+
+WRITEBACK_RESULT = {
+    "type": "Rechnung", "sender": "Matenaar Service GmbH", "summary": "Lohnabrechnung",
+    "tags": ["Lohn"], "amount": "1906.95", "due_date": None,
+}
+
+
+class TestWriteToPaperless:
+    def _run(self, monkeypatch, current):
+        import asyncio
+        from app.tasks import paperless_analyze
+
+        fake = WritebackClient(current)
+        monkeypatch.setattr(paperless_analyze, "get_paperless_client", lambda: fake)
+        asyncio.run(paperless_analyze._write_to_paperless(568, dict(WRITEBACK_RESULT)))
+        return fake
+
+    def test_curated_document_keeps_title_tags_correspondent_and_type(self, monkeypatch):
+        fake = self._run(monkeypatch, {
+            "title": "Matenaar Lohnabrechnung April 2026", "tags": [54, 160],
+            "correspondent": 45, "document_type": 5,
+        })
+        assert fake.patched["tags"][:2] == [54, 160]
+        assert len(fake.patched["tags"]) == 3
+        assert fake.patched["title"] is None
+        assert fake.patched["correspondent"] is None
+        assert fake.patched["document_type"] is None
+        assert ("correspondent", "Matenaar Service GmbH") not in fake.created
+
+    def test_fresh_scan_gets_title_correspondent_and_type(self, monkeypatch):
+        fake = self._run(monkeypatch, {
+            "title": "Scan_08112026165306_20261108165306", "tags": [],
+            "correspondent": None, "document_type": None,
+        })
+        assert fake.patched["title"].startswith("Matenaar Service GmbH – Rechnung")
+        assert fake.patched["correspondent"] is not None
+        assert fake.patched["document_type"] is not None
+        assert len(fake.patched["tags"]) == 1
+
+    @pytest.mark.parametrize("title,expected", [
+        ("Scan_08112026163907_20261108163907", True),
+        ("Scan 15.11.2019", True),
+        ("", True),
+        ("Experis Arbeitszeugnis", False),
+        ("Scanner-Handbuch Xerox", False),
+    ])
+    def test_default_title_detection(self, title, expected):
+        from app.tasks.paperless_analyze import _is_default_title
+        assert _is_default_title(title) is expected

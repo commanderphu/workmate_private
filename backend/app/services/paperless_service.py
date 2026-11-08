@@ -261,13 +261,17 @@ class PaperlessSyncService:
         if not paperless_id:
             return False
 
-        # Build tags
+        # Build tags: add to the existing ones, never replace manual tags
+        current = await self.client.get_document(int(paperless_id))
+        tags = list(current.get("tags") or [])
         processed_tag = await self.client.get_or_create_tag("workmate-processed")
-        tags = [processed_tag["id"]]
+        if processed_tag["id"] not in tags:
+            tags.append(processed_tag["id"])
 
         if doc.type and doc.type != "other":
             type_tag = await self.client.get_or_create_tag(f"type:{doc.type}")
-            tags.append(type_tag["id"])
+            if type_tag["id"] not in tags:
+                tags.append(type_tag["id"])
 
         # Build custom fields
         custom_fields = []
@@ -295,6 +299,15 @@ class PaperlessSyncService:
             notes_lines.append("\nErstelle Tasks:")
             for t in tasks:
                 notes_lines.append(f"- {t.title} (Priorität: {t.priority}, Fällig: {t.due_date})")
+
+        # Keep custom fields that Workmate does not manage
+        if custom_fields:
+            own = {cf["field"] for cf in custom_fields}
+            custom_fields = [
+                {"field": cf["field"], "value": cf.get("value")}
+                for cf in (current.get("custom_fields") or [])
+                if cf.get("field") not in own
+            ] + custom_fields
 
         await self.client.update_document(
             document_id=int(paperless_id),
