@@ -94,3 +94,29 @@ class TestProviderSelection:
         monkeypatch.setattr(claude_service.settings, "LLM_PROVIDER", "irgendwas")
         with pytest.raises(ValueError, match="Unknown LLM_PROVIDER"):
             ClaudeService()
+
+
+def test_claude_response_text_skips_thinking_blocks():
+    """Haiku 5.5 schickt thinking-Blöcke vor dem Text (Fehler 'ThinkingBlock' has no attribute 'text')"""
+    from types import SimpleNamespace
+    from app.services.claude_service import _response_text
+
+    response = SimpleNamespace(
+        stop_reason="end_turn",
+        content=[
+            SimpleNamespace(type="thinking", thinking="", signature="x"),
+            SimpleNamespace(type="text", text='{"title": '),
+            SimpleNamespace(type="text", text='"Mahnung"}'),
+        ],
+    )
+    assert _response_text(response) == '{"title": "Mahnung"}'
+
+
+def test_claude_response_text_without_text_raises():
+    from types import SimpleNamespace
+    import pytest
+    from app.services.claude_service import _response_text
+
+    response = SimpleNamespace(stop_reason="max_tokens", content=[SimpleNamespace(type="thinking", thinking="")])
+    with pytest.raises(ValueError, match="max_tokens"):
+        _response_text(response)

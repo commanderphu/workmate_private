@@ -17,6 +17,20 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_CLAUDE_MODEL = "claude-haiku-5-5"
 
+# Neuere Modelle (z.B. Haiku 5.5) denken standardmäßig: vor dem Text kommen
+# thinking-Blöcke, und das Denken zählt gegen max_tokens.
+CLAUDE_MAX_TOKENS = 16000
+
+
+def _response_text(response) -> str:
+    """Join all text blocks of a Messages API response (thinking blocks are skipped)"""
+    text = "".join(block.text for block in response.content if block.type == "text")
+    if not text:
+        raise ValueError(f"Claude response contains no text (stop_reason={response.stop_reason})")
+    if response.stop_reason == "max_tokens":
+        logger.warning("Claude response hit max_tokens, answer may be truncated")
+    return text
+
 
 class ClaudeService:
     """
@@ -50,10 +64,10 @@ class ClaudeService:
         if self.provider == "claude":
             response = self.client.messages.create(
                 model=self.model,
-                max_tokens=max_tokens,
+                max_tokens=max(max_tokens, CLAUDE_MAX_TOKENS),
                 messages=[{"role": "user", "content": prompt}]
             )
-            return response.content[0].text
+            return _response_text(response)
 
         if self.provider == "chatgpt":
             return chatgpt_service.complete(prompt, self.model)
@@ -93,7 +107,7 @@ class ClaudeService:
 
         response = self.client.messages.create(
             model=self.model,
-            max_tokens=4096,
+            max_tokens=CLAUDE_MAX_TOKENS,
             messages=[{
                 "role": "user",
                 "content": [
@@ -105,7 +119,7 @@ class ClaudeService:
                 ],
             }],
         )
-        return self._parse_ai_response(response.content[0].text, document_type)
+        return self._parse_ai_response(_response_text(response), document_type)
 
     def generate_task_suggestion(self, metadata: dict) -> Optional[dict]:
         """Generate a suggested task based on document metadata."""
