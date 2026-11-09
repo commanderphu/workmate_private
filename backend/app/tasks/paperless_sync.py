@@ -38,17 +38,23 @@ def paperless_sync():
         for user in users:
             try:
                 import asyncio
-                loop = asyncio.get_event_loop()
                 svc = PaperlessSyncService(db=db, user_id=user.id)
 
-                result = loop.run_until_complete(svc.import_new_documents(since=since))
+                # asyncio.run statt get_event_loop: Nach einem asyncio.run in einem anderen
+                # Task (z. B. paperless_analyze) hat der Worker-Prozess keine aktuelle Loop mehr
+                async def _sync():
+                    return (
+                        await svc.import_new_documents(since=since),
+                        await svc.push_workmate_changes(),
+                    )
+
+                result, wb = asyncio.run(_sync())
                 if result["imported"] > 0:
                     logger.info(
                         f"Paperless sync user={user.id}: "
                         f"{result['imported']} imported, {result['skipped']} skipped"
                     )
 
-                wb = loop.run_until_complete(svc.push_workmate_changes())
                 if wb["synced"] > 0:
                     logger.info(f"Paperless write-back user={user.id}: {wb['synced']} docs synced")
 

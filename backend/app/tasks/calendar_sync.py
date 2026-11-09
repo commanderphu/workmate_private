@@ -48,9 +48,7 @@ def calendar_sync():
             if not user:
                 continue
             try:
-                result = asyncio.get_event_loop().run_until_complete(
-                    sync_service.sync_integration(integration, user)
-                )
+                result = asyncio.run(sync_service.sync_integration(integration, user))
                 if result.errors == 0:
                     synced += 1
                 else:

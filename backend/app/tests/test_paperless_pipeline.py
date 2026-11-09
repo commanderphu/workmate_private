@@ -11,6 +11,10 @@ from app.services import paperless_service
 from app.services.chatgpt_service import ChatGPTPermanentError
 from app.tasks import calendar_sync as calendar_sync_module
 from app.tasks import paperless_analyze
+import app.tasks.paperless_sync  # noqa: F401  (registers the module in sys.modules)
+import sys
+
+paperless_sync_module = sys.modules["app.tasks.paperless_sync"]
 
 from .conftest import TestingSessionLocal
 
@@ -169,6 +173,35 @@ class TestCalendarSyncTask:
         # independent of a local .env (the dev instance has CALENDAR_SYNC_ENABLED=false)
         monkeypatch.setattr(calendar_sync_module.settings, "CALENDAR_SYNC_ENABLED", True)
         assert calendar_sync_module.calendar_sync() == {"synced": 0}
+
+
+class TestPaperlessSyncTask:
+    def test_runs_after_asyncio_run_in_same_process(self, db, user, monkeypatch):
+        # paperless_analyze uses asyncio.run, which leaves the worker without a current loop.
+        # The sync used asyncio.get_event_loop() and failed from then on (Prod 08.11.2026)
+        import asyncio
+
+        asyncio.run(asyncio.sleep(0))
+
+        calls = []
+
+        async def fake_import(self, since):
+            calls.append("import")
+            return {"imported": 0, "skipped": 0}
+
+        async def fake_push(self):
+            calls.append("push")
+            return {"synced": 0}
+
+        monkeypatch.setattr(paperless_sync_module, "SessionLocal", TestingSessionLocal)
+        monkeypatch.setattr(paperless_sync_module.settings, "PAPERLESS_SYNC_ENABLED", True)
+        monkeypatch.setattr(paperless_sync_module, "get_paperless_client", lambda: object())
+        monkeypatch.setattr(paperless_sync_module.PaperlessSyncService, "import_new_documents", fake_import)
+        monkeypatch.setattr(paperless_sync_module.PaperlessSyncService, "push_workmate_changes", fake_push)
+
+        paperless_sync_module.paperless_sync()
+
+        assert calls == ["import", "push"]
 
 
 class TestOverdueReminderTime:
