@@ -25,6 +25,12 @@ RUN printf 'server {\n\
     server_name _;\n\
     root /usr/share/nginx/html;\n\
     index index.html;\n\
+    # Einstiegsdateien ohne Hash im Namen nie cachen (Browser + Cloudflare),\n\
+    # sonst laufen nach einem Deploy stundenlang alte Versionen\n\
+    location ~* ^/(index\\.html|flutter_bootstrap\\.js|flutter_service_worker\\.js|flutter\\.js|main\\.dart\\.(js|mjs|wasm)|version\\.json|manifest\\.json|firebase-messaging-sw\\.js)$ {\n\
+        add_header Cache-Control "no-cache" always;\n\
+        try_files $uri =404;\n\
+    }\n\
     location / {\n\
         try_files $uri $uri/ /index.html;\n\
     }\n\
