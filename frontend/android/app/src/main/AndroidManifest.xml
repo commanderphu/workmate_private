@@ -34,6 +34,17 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Deep Link workmate://open, damit Browser (phu-dashboard) die App
+                 starten können; ohne BROWSABLE dürfen sie die Activity nicht öffnen -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="workmate" android:host="open"/>
+            </intent-filter>
+            <!-- Den Link-Pfad nicht an Flutters Navigator geben: Die App hat keine
+                 benannten Routen, workmate://open soll einfach die Startseite zeigen -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false"/>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
