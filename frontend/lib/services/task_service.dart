@@ -11,7 +11,10 @@ class TaskService {
 
   // Get all tasks
   Future<List<Task>> getTasks({String? status}) async {
-    final queryParams = status != null ? {'status': status} : null;
+    final queryParams = <String, dynamic>{
+      'limit': 1000,
+      if (status != null) 'status_filter': status,
+    };
     final response = await _apiService.get(
       ApiConfig.tasks,
       queryParameters: queryParams,

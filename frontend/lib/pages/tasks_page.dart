@@ -13,7 +13,25 @@ class TasksPage extends StatefulWidget {
 }
 
 class _TasksPageState extends State<TasksPage> {
-  String _filterStatus = 'all';
+  // Gefiltert wird lokal: Alle Tasks werden einmal geladen, die Chips
+  // kombinieren sich (innerhalb einer Gruppe ODER, zwischen Gruppen UND)
+  static const _priorities = {
+    'critical': 'Kritisch',
+    'high': 'Hoch',
+    'medium': 'Mittel',
+    'low': 'Niedrig',
+  };
+  static const _priorityRank = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3};
+
+  final Set<String> _statuses = {'open'};
+  final Set<String> _priorityFilter = {};
+  bool _overdueOnly = false;
+  bool _thisWeekOnly = false;
+  bool _withAmountOnly = false;
+
+  bool _searching = false;
+  String _query = '';
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -23,9 +41,129 @@ class _TasksPageState extends State<TasksPage> {
     });
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _refreshTasks() async {
-    final status = _filterStatus == 'all' ? null : _filterStatus;
-    await context.read<TaskProvider>().loadTasks(status: status);
+    await context.read<TaskProvider>().loadTasks();
+  }
+
+  bool get _hasActiveFilters =>
+      !(_statuses.length == 1 && _statuses.contains('open')) ||
+      _priorityFilter.isNotEmpty ||
+      _overdueOnly ||
+      _thisWeekOnly ||
+      _withAmountOnly ||
+      _query.isNotEmpty;
+
+  void _resetFilters() {
+    setState(() {
+      _statuses
+        ..clear()
+        ..add('open');
+      _priorityFilter.clear();
+      _overdueOnly = false;
+      _thisWeekOnly = false;
+      _withAmountOnly = false;
+      _query = '';
+      _searchController.clear();
+      _searching = false;
+    });
+  }
+
+  List<Task> _applyFilters(List<Task> tasks) {
+    final now = DateTime.now();
+    final weekEnd = DateTime(now.year, now.month, now.day)
+        .add(const Duration(days: 8)); // heute + 7 volle Tage
+    final q = _query.trim().toLowerCase();
+
+    final result = tasks.where((t) {
+      // Alles, was nicht erledigt ist (open, in_progress …), zählt als offen
+      final statusKey = t.isDone ? 'done' : 'open';
+      if (_statuses.isNotEmpty && !_statuses.contains(statusKey)) return false;
+      if (_priorityFilter.isNotEmpty && !_priorityFilter.contains(t.priority)) {
+        return false;
+      }
+      if (_overdueOnly && !t.isOverdue) return false;
+      if (_thisWeekOnly &&
+          (t.dueDate == null || !t.dueDate!.isBefore(weekEnd))) {
+        return false;
+      }
+      if (_withAmountOnly && t.amount == null) return false;
+      if (q.isNotEmpty &&
+          !t.title.toLowerCase().contains(q) &&
+          !(t.description?.toLowerCase().contains(q) ?? false)) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    // Offene zuerst, dann nach Fälligkeit (ohne Datum ans Ende), dann Priorität
+    result.sort((a, b) {
+      if (a.isDone != b.isDone) return a.isDone ? 1 : -1;
+      if (a.isDone) {
+        return (b.completedAt ?? b.updatedAt)
+            .compareTo(a.completedAt ?? a.updatedAt);
+      }
+      if (a.dueDate != null && b.dueDate == null) return -1;
+      if (a.dueDate == null && b.dueDate != null) return 1;
+      if (a.dueDate != null && b.dueDate != null) {
+        final c = a.dueDate!.compareTo(b.dueDate!);
+        if (c != 0) return c;
+      }
+      return (_priorityRank[a.priority] ?? 9)
+          .compareTo(_priorityRank[b.priority] ?? 9);
+    });
+    return result;
+  }
+
+  Widget _buildFilterBar(List<Task> all) {
+    final overdueCount = all.where((t) => t.isOverdue).length;
+
+    Widget chip(String label, bool selected, VoidCallback onTap,
+        {Color? color}) {
+      return FilterChip(
+        label: Text(label),
+        selected: selected,
+        onSelected: (_) => setState(onTap),
+        selectedColor: color?.withValues(alpha: 0.25),
+        visualDensity: VisualDensity.compact,
+      );
+    }
+
+    void toggle(Set<String> set, String value) =>
+        set.contains(value) ? set.remove(value) : set.add(value);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          chip('Offen', _statuses.contains('open'),
+              () => toggle(_statuses, 'open')),
+          chip('Erledigt', _statuses.contains('done'),
+              () => toggle(_statuses, 'done')),
+          chip(
+            overdueCount > 0 ? 'Überfällig ($overdueCount)' : 'Überfällig',
+            _overdueOnly,
+            () => _overdueOnly = !_overdueOnly,
+            color: Colors.red,
+          ),
+          chip('Nächste 7 Tage', _thisWeekOnly,
+              () => _thisWeekOnly = !_thisWeekOnly),
+          chip('Mit Betrag', _withAmountOnly,
+              () => _withAmountOnly = !_withAmountOnly),
+          for (final p in _priorities.entries)
+            chip(p.value, _priorityFilter.contains(p.key),
+                () => toggle(_priorityFilter, p.key),
+                color: _TaskCard.priorityColor(p.key)),
+        ],
+      ),
+    );
   }
 
   void _showCreateTaskDialog() {
@@ -130,28 +268,58 @@ class _TasksPageState extends State<TasksPage> {
   @override
   Widget build(BuildContext context) {
     final taskProvider = context.watch<TaskProvider>();
+    final filtered = _applyFilters(taskProvider.tasks);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tasks'),
+        title: _searching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Aufgaben durchsuchen …',
+                  border: InputBorder.none,
+                ),
+                onChanged: (v) => setState(() => _query = v),
+              )
+            : const Text('Tasks'),
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list),
-            onSelected: (value) {
-              setState(() {
-                _filterStatus = value;
-              });
-              _refreshTasks();
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'all', child: Text('All Tasks')),
-              const PopupMenuItem(value: 'open', child: Text('Open')),
-              const PopupMenuItem(
-                  value: 'in_progress', child: Text('In Progress')),
-              const PopupMenuItem(value: 'done', child: Text('Done')),
-            ],
+          IconButton(
+            tooltip: _searching ? 'Suche schließen' : 'Suchen',
+            icon: Icon(_searching ? Icons.close : Icons.search),
+            onPressed: () => setState(() {
+              if (_searching) {
+                _query = '';
+                _searchController.clear();
+              }
+              _searching = !_searching;
+            }),
           ),
+          if (_hasActiveFilters)
+            IconButton(
+              tooltip: 'Filter zurücksetzen',
+              icon: const Icon(Icons.filter_alt_off),
+              onPressed: _resetFilters,
+            ),
         ],
+        bottom: taskProvider.tasks.isEmpty
+            ? null
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(28),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16, bottom: 8),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '${filtered.length} von ${taskProvider.tasks.length} Aufgaben',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.grey),
+                    ),
+                  ),
+                ),
+              ),
       ),
       body: RefreshIndicator(
         onRefresh: _refreshTasks,
@@ -208,17 +376,49 @@ class _TasksPageState extends State<TasksPage> {
                           ],
                         ),
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: taskProvider.tasks.length,
-                        itemBuilder: (context, index) {
-                          final task = taskProvider.tasks[index];
-                          return _TaskCard(
-                            task: task,
-                            onTap: () => _showTaskDetails(task),
-                            onStatusToggle: () => _toggleTaskStatus(task),
-                          );
-                        },
+                    : Column(
+                        children: [
+                          _buildFilterBar(taskProvider.tasks),
+                          Expanded(
+                            child: filtered.isEmpty
+                                ? ListView(
+                                    // ListView, damit Pull-to-Refresh geht
+                                    children: [
+                                      const SizedBox(height: 80),
+                                      Icon(Icons.filter_alt_off,
+                                          size: 48,
+                                          color: Colors.grey.shade400),
+                                      const SizedBox(height: 12),
+                                      const Center(
+                                        child: Text(
+                                            'Keine Aufgaben für diese Filter'),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Center(
+                                        child: TextButton(
+                                          onPressed: _resetFilters,
+                                          child: const Text(
+                                              'Filter zurücksetzen'),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : ListView.builder(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        16, 12, 16, 88),
+                                    itemCount: filtered.length,
+                                    itemBuilder: (context, index) {
+                                      final task = filtered[index];
+                                      return _TaskCard(
+                                        task: task,
+                                        onTap: () => _showTaskDetails(task),
+                                        onStatusToggle: () =>
+                                            _toggleTaskStatus(task),
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ],
                       ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -257,7 +457,7 @@ class _TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final priorityColor = _getPriorityColor(task.priority);
+    final priorityColor = TaskCardColors.of(task.priority);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -347,7 +547,11 @@ class _TaskCard extends StatelessWidget {
     );
   }
 
-  Color _getPriorityColor(String priority) {
+  static Color priorityColor(String priority) => TaskCardColors.of(priority);
+}
+
+class TaskCardColors {
+  static Color of(String priority) {
     switch (priority) {
       case 'critical':
         return Colors.red;
